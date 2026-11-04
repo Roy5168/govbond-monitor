@@ -8,6 +8,11 @@ on:
     - cron: "0 10 * * 1-5"
     - cron: "0 11 * * 1-5"
   workflow_dispatch:
+    inputs:
+      dates:
+        description: "補抓期間（例：2026-11-03 2026-11-04），空白＝從資料最後一天補到今天"
+        required: false
+        default: ""
   push:
     branches: [main]
     paths: ["template.html", "bonddata.py", "update.py", "parse_issues.py", ".github/workflows/update.yml"]
@@ -35,7 +40,7 @@ jobs:
       - run: pip install xlrd==2.0.2
 
       - name: 抓櫃買日檔與官方發行資料
-        run: python update.py
+        run: python update.py ${{ github.event.inputs.dates }}
 
       - name: 確保網頁存在（沒有新資料時 update.py 不會重產）
         run: |
