@@ -336,22 +336,41 @@ CSP_TMPL = ('<meta http-equiv="Content-Security-Policy" content="'
             '">')
 
 
-def render(payload, out: Path = DEFAULT_OUT):
-    """把資料內嵌進 template，並依內嵌後的 script 內容計算 CSP hash。
+EDITIONS = ("full", "public")
+ADMIN_BLOCK = re.compile(r"<!--ADMIN\{-->.*?<!--\}ADMIN-->", re.S)
+
+
+def render_html(payload, edition: str = "full") -> str:
+    """把資料內嵌進 template，並依內嵌後的 script 內容計算 CSP hash，回傳整頁 HTML。
 
     頁面沒有任何外部資源，CSP 只允許這一段自己的 script 執行；就算未來某處
     escape 漏掉，插入的 inline handler 也不會被執行。
+
+    edition：full＝完整版（本機與管理者版）；public＝一般版（公開網址），
+    template 中 <!--ADMIN{--> … <!--}ADMIN--> 包起來的區塊（匯出／匯入、資料說明與檢核）整段拿掉。
     """
+    if edition not in EDITIONS:
+        raise ValueError(f"edition 只能是 {EDITIONS}")
     html = TEMPLATE.read_text(encoding="utf-8").replace(
         "/*__DATA__*/null", json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    html = html.replace("/*__EDITION__*/'full'", json.dumps(edition), 1)   # 舊版 template 沒有這個標記，照樣可產
+    if edition == "public":
+        html = ADMIN_BLOCK.sub("", html)
+    html = html.replace("<!--ADMIN{-->", "").replace("<!--}ADMIN-->", "")
 
     scripts = re.findall(r"<script>(.*?)</script>", html, re.S)
     if len(scripts) != 1:
         raise SystemExit(f"template 應該只有一段 inline script，實際有 {len(scripts)} 段，CSP hash 會失效")
-    digest = base64.b64encode(hashlib.sha256(scripts[0].encode("utf-8")).digest()).decode()
-    html = html.replace("<!--__CSP__-->", CSP_TMPL.format(hash="sha256-" + digest), 1)
+    html = html.replace("<!--__CSP__-->", CSP_TMPL.format(hash=script_hash(scripts[0])), 1)
+    return html
 
-    out.write_text(html, encoding="utf-8")
+
+def script_hash(js: str) -> str:
+    return "sha256-" + base64.b64encode(hashlib.sha256(js.encode("utf-8")).digest()).decode()
+
+
+def render(payload, out: Path = DEFAULT_OUT, edition: str = "full"):
+    out.write_text(render_html(payload, edition), encoding="utf-8")
     return out
 
 

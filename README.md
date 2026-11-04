@@ -4,12 +4,13 @@
 
 ## 版本
 
-目前 **V1.2.3**（2026-11-04）。版號寫在 `template.html` 的 script 開頭（`APP_VERSION`／`APP_DATE`／`CHANGELOG`），顯示在報頭、週報列印頁右上角、「資料說明與檢核」分頁的版本紀錄。
+目前 **V1.3**（2026-11-04）。版號寫在 `template.html` 的 script 開頭（`APP_VERSION`／`APP_DATE`／`CHANGELOG`），顯示在報頭、週報列印頁右上角、「資料說明與檢核」分頁的版本紀錄。
 
 每次改程式：調 `APP_VERSION`（功能、計算方式或資料格式變動進第二位，僅文字或外觀調整加第三位；要不要進位先問使用者）、改 `APP_DATE`、在 `CHANGELOG` 最前面加一筆、`<title>` 同步，並另存 `versions/template_<版號>.html`（不覆蓋舊版）。`公債市場觀測.html` 是每天由 `update.py` 重新產生的工作檔，檔名不帶版號；交付給別人的副本才命名為 `公債市場觀測_<版號>.html`。
 
 | 版本 | 日期 | 內容 |
 |---|---|---|
+| V1.3 | 2026-11-04 | 分成一般版與管理者版：一般版（公開網址）隱藏「匯出／匯入」「資料說明與檢核」、不讀瀏覽器記住的匯入資料；管理者版在 `/admin/`，整頁以密碼加密 |
 | V1.2.3 | 2026-11-04 | 公開網頁版：拿掉終端機操作說明、加上非官方資料聲明（報頭與週報列印附註） |
 | V1.2.2 | 2026-11-04 | **採用使用者重新設計的介面**（左側導覽列、量化交易終端風格、等寬數字）；舊設計保留為 `versions/template_V1.2.2_classic.html` 與 `公債市場觀測- classic.html`。之後所有修改都以新設計為基礎 |
 | V1.2.2 | 2026-10-29 | 天期走勢與個券檢視的時間圖橫軸上下對齊（共用 `X_PAD` 左右邊界） |
@@ -27,17 +28,30 @@
 | `bonddata.py` | 三支腳本共用的讀檔、合併、產圖邏輯 |
 | `parse_issues.py` | 抓中央銀行開放資料的「中央公債標售概況表」CSV，寫成 `data/issues.csv`（PDF 為備援） |
 | `daily_brief.py` | 輸出「台債當日行情」摘要（Markdown＋CSV），給不能連外網的 AI 或報告直接使用 |
-| `template.html` | 版面、圖表、互動的原始碼（資料佔位符 `/*__DATA__*/null`） |
+| `template.html` | 版面、圖表、互動的原始碼（資料佔位符 `/*__DATA__*/null`、版別佔位符 `/*__EDITION__*/'full'`；`<!--ADMIN{-->…<!--}ADMIN-->` 包住的區塊只出現在完整版） |
+| `build_site.py` | 產生網站：`_site/index.html`（一般版）與 `_site/admin/index.html`（管理者版，加密） |
 | `data/records.csv` | 累積下來的明細（交易日 × 券別 × 市場），目前 2025-01-02 起共 3,638 筆 |
 | `data/issues.csv` | 各期公債的官方發行日與年期（由 `parse_issues.py` 產生） |
 | `公債市場觀測.html` | 產出的成品，用瀏覽器打開即可 |
 
 ## 每天更新
 
-**網頁版（2026-11-04 起）**：<https://roy5168.github.io/govbond-monitor/>，程式碼庫 `Roy5168/govbond-monitor`（公開）。GitHub Actions（`.github/workflows/update.yml`）在台灣時間週一至週五 17:00、17:30、18:00、19:00 執行 `update.py`，資料有變動就把 `data/records.csv`／`issues.csv` 寫回版本庫，並把產出的 HTML 部署到 GitHub Pages。產出的 HTML 不進版本庫（`.gitignore`），避免每天多一份 450KB。實測 GitHub 的伺服器抓得到櫃買日檔與央行開放資料。
+**網頁版（2026-11-04 起）**：<https://roy5168.github.io/govbond-monitor/>，程式碼庫 `Roy5168/govbond-monitor`（公開）。GitHub Actions（`.github/workflows/update.yml`）在台灣時間週一至週五 17:00、17:30、18:00、19:00 執行 `update.py`，資料有變動就把 `data/records.csv`／`issues.csv` 寫回版本庫，再用 `build_site.py` 產生一般版與管理者版部署到 GitHub Pages。產出的 HTML 不進版本庫（`.gitignore`），避免每天多一份 450KB。實測 GitHub 的伺服器抓得到櫃買日檔與央行開放資料。
+
+**兩個版本**（V1.3 起）：
+
+| 版本 | 網址 | 內容 |
+|---|---|---|
+| 一般版 | <https://roy5168.github.io/govbond-monitor/> | 每日總覽、天期走勢、個券檢視、冷門券雷達、週報。沒有匯出／匯入、資料說明與檢核；不讀 localStorage 裡的匯入資料（兩版同網域、共用 localStorage，管理者匯入的資料不能跑到一般版） |
+| 管理者版 | <https://roy5168.github.io/govbond-monitor/admin/> | 七個分頁全有。整頁以 PBKDF2（60 萬次）＋AES-256-GCM 加密，輸入密碼才在瀏覽器解密；可勾「在這台裝置記住」 |
+| 本機 | `公債市場觀測.html` | 完整版、不需密碼（`update.py` 產生） |
+
+- 密碼存在 repo secret `ADMIN_PASSWORD`，設定或更換：`gh secret set ADMIN_PASSWORD -R Roy5168/govbond-monitor`（會提示輸入，不留在指令歷史），再手動執行一次 workflow。沒設 secret 時 `/admin/` 只放「尚未設定密碼」說明頁，一般版照常發布。
+- 靜態網站沒有伺服器端驗證，保護全靠加密強度，密碼請用 12 字以上；忘記密碼直接換一組即可（舊的「記住」會自動失效）。
+- 包裝頁（`build_site.py` 的 `WRAP_JS`）注意：script 必須整段包在函式裡（`document.open` 後全域物件不變，頂層 `const` 會跟原頁撞名）；換頁要等 `load` 之後（解析器還在跑時 `document.open` 會被忽略，原頁被塞進 body，標題與 CSP 失效）；包裝頁 CSP 要同時放行原頁 script 的 hash。
 
 - 補抓特定期間：Actions 頁面手動執行「每日更新並發布」，`dates` 填 `2026-11-02 2026-11-03`；或 `gh workflow run update.yml -R Roy5168/govbond-monitor -f dates="起 迄"`。
-- 改了 `template.html`、`bonddata.py`、`update.py`、`parse_issues.py` 或 workflow 推上 main，會自動重新部署。推之前先 `git pull`（機器人每天會寫回資料）。
+- 改了 `template.html`、`bonddata.py`、`update.py`、`build_site.py`、`parse_issues.py` 或 workflow 推上 main，會自動重新部署。推之前先 `git pull`（機器人每天會寫回資料）。
 - **本機排程改為只同步**：`~/scripts/bondmarket_update.sh` 不再自己抓櫃買，而是 `git pull --ff-only` 取回 GitHub 的資料後 `update.py --rebuild`，避免本機與 GitHub 兩份資料分岔。
 
 **自動更新（2026-11-04 起，MacBook Pro）**：週一至週五 17:00 由 launchd 執行 `~/scripts/bondmarket_update.sh`（排程檔 `~/Library/LaunchAgents/com.juuen.bondmarket-update.plist`）。腳本會等網路通、跑 `update.py`；若還沒有當天資料，隔 30、30、60 分鐘再試（最晚約 19:00），完成或確定無資料時右上角跳通知。紀錄檔在 `~/scripts/bondmarket-logs/run-YYYY-MM-DD.log`（保留 60 天）。

@@ -15,7 +15,7 @@ on:
         default: ""
   push:
     branches: [main]
-    paths: ["template.html", "bonddata.py", "update.py", "parse_issues.py", ".github/workflows/update.yml"]
+    paths: ["template.html", "bonddata.py", "update.py", "build_site.py", "parse_issues.py", ".github/workflows/update.yml"]
 
 permissions:
   contents: write
@@ -37,15 +37,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install xlrd==2.0.2
+      - run: pip install xlrd==2.0.2 cryptography==46.0.5
 
       - name: 抓櫃買日檔與官方發行資料
         run: python update.py ${{ github.event.inputs.dates }}
 
-      - name: 確保網頁存在（沒有新資料時 update.py 不會重產）
-        run: |
-          [ -f 公債市場觀測.html ] || python update.py --rebuild
-          mkdir -p _site && cp 公債市場觀測.html _site/index.html
+      - name: 產生一般版（/）與管理者版（/admin/，以 ADMIN_PASSWORD 加密）
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: python build_site.py _site
 
       - name: 資料有變動才寫回版本庫
         run: |

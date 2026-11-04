@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--__CSP__-->
-<title>台灣公債買賣斷市場觀測 V1.2.3</title>
+<title>台灣公債買賣斷市場觀測 V1.3</title>
 <style>
 /* ── 設計語彙：量化交易終端 ──────────────────────────────
    深色網格底、冷光章節色、等寬數字；資料是主角，介面以細線與微光界定層次。 */
@@ -428,8 +428,10 @@ body.printing .hint{background:none;padding:0}
     <button class="tab" role="tab" id="tabbtn-bond" aria-controls="tab-bond" data-tab="bond" data-no="03" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/><path d="M7.8 10.5h5.4M10.5 7.8v5.4"/></svg><span class="tl"><b>個券檢視</b><small aria-hidden="true">Bond Inspector</small></span></button>
     <button class="tab" role="tab" id="tabbtn-cold" aria-controls="tab-cold" data-tab="cold" data-no="04" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6.4-6.4"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg><span class="tl"><b>冷門券雷達</b><small aria-hidden="true">Illiquid Radar</small></span></button>
     <button class="tab" role="tab" id="tabbtn-week" aria-controls="tab-week" data-tab="week" data-no="05" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6.2a1.2 1.2 0 0 0-1.2 1.2v15.6A1.2 1.2 0 0 0 6.2 21h11.6a1.2 1.2 0 0 0 1.2-1.2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 17h4.5"/></svg><span class="tl"><b>週報</b><small aria-hidden="true">Weekly Report</small></span></button>
+<!--ADMIN{-->
     <button class="tab" role="tab" id="tabbtn-io" aria-controls="tab-io" data-tab="io" data-no="06" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20V4M3 8l4-4 4 4"/><path d="M17 4v16M13 16l4 4 4-4"/></svg><span class="tl"><b>匯出／匯入</b><small aria-hidden="true">Export · Import</small></span></button>
     <button class="tab" role="tab" id="tabbtn-info" aria-controls="tab-info" data-tab="info" data-no="07" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.5"/><path d="M4.5 5.5v13c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-13"/><path d="M4.5 12c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5"/></svg><span class="tl"><b>資料說明與檢核</b><small aria-hidden="true">Data & QA</small></span></button>
+<!--}ADMIN-->
   </nav>
 </aside>
 <main class="main">
@@ -708,6 +710,7 @@ body.printing .hint{background:none;padding:0}
 </div></div>
 </section>
 
+<!--ADMIN{-->
 <!-- ============ 匯出／匯入 ============ -->
 <section id="tab-io" class="hidden" role="tabpanel" aria-labelledby="tabbtn-io">
   <div class="card">
@@ -785,20 +788,22 @@ body.printing .hint{background:none;padding:0}
     <div class="scrollx"><table id="checkTable"></table></div>
   </div>
 </section>
+<!--}ADMIN-->
 
 </main>
 </div>
 <div id="tip"></div>
-<div id="drop">放開以匯入資料檔（.csv / .xlsx / .json）</div>
+<!--ADMIN{--><div id="drop">放開以匯入資料檔（.csv / .xlsx / .json）</div><!--}ADMIN-->
 
 <script>
 "use strict";
 /* ── 版本控管 ───────────────────────────────────────────
    每次改程式：調 APP_VERSION（功能、計算方式或資料格式變動進第二位，僅文字或外觀調整加第三位）、
    改 APP_DATE、在 CHANGELOG 最前面加一筆、<title> 同步，並另存 versions/template_<版號>.html。 */
-const APP_VERSION = 'V1.2.3';
+const APP_VERSION = 'V1.3';
 const APP_DATE = '2026-11-04';
 const CHANGELOG = [
+  ['V1.3','2026-11-04','分成一般版與管理者版：一般版（公開網址）隱藏「匯出／匯入」與「資料說明與檢核」，也不讀取瀏覽器記住的匯入資料；管理者版放在另一個網址、需輸入密碼才能開啟，功能完整。'],
   ['V1.2.3', '2026-11-04', '發布為公開網頁（每交易日 17:00 自動更新）：拿掉只適用本機的終端機操作說明，改為網頁版的資料更新說明；報頭與週報列印附註加上非官方資料聲明。'],
   ['V1.2.2', '2026-11-04', '介面重新設計（使用者提供）：左側導覽列、量化交易終端風格配色、等寬數字字型；週報列印頁右上角改用介面字型，避免標題折行。'],
   ['V1.2.2', '2026-10-29', '天期走勢：「各天期成交殖利率」與「每日成交面額」兩張圖改用同一組左右邊界，橫軸日期上下對齊；個券檢視的三張時間圖一併對齊。'],
@@ -808,6 +813,10 @@ const CHANGELOG = [
   ['V1.0', '2026-08-22', '初版：每日總覽、天期走勢、個券檢視、冷門券雷達、匯出／匯入；官方發行日、指標券逐日判定、參考曲線與對曲線利差。'],
 ];
 const BUILTIN = /*__DATA__*/null;
+/* 版別：build 時由 bonddata.render 代換。public＝一般版（公開網址），沒有匯出匯入、資料說明與檢核，
+   也不讀 localStorage 裡的匯入資料（管理者版與一般版同網域，共用 localStorage）。 */
+const EDITION = /*__EDITION__*/'full';
+const ADMIN = EDITION!=='public';
 let DATA, M, DATES, BONDS, RECS, MK, NB, ND;
 
 const TENORS = [
@@ -2804,18 +2813,20 @@ function init(){
     try{ localStorage.setItem('bondmkt.theme', next); }catch(e){}   // 記住偏好，下次開啟沿用
     render();
   };
-  const fi=document.getElementById('impFile');
-  document.getElementById('impBtn').onclick=()=>fi.click();
-  fi.onchange=e=>{ if(e.target.files[0]) importFile(e.target.files[0]); fi.value=''; };
-  document.getElementById('resetBtn').onclick=()=>{
-    LS.del(); loadData(JSON.parse(JSON.stringify(BUILTIN))); render();
-    document.getElementById('impMsg').innerHTML='<span class="ok">已還原為 HTML 內建資料。</span>';
-  };
-  const drop=document.getElementById('drop');
-  addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('on');});
-  addEventListener('dragleave',e=>{ if(e.relatedTarget===null) drop.classList.remove('on'); });
-  addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('on');
-    const f=e.dataTransfer.files[0]; if(f){ setTab('io'); importFile(f); } });
+  if(ADMIN){
+    const fi=document.getElementById('impFile');
+    document.getElementById('impBtn').onclick=()=>fi.click();
+    fi.onchange=e=>{ if(e.target.files[0]) importFile(e.target.files[0]); fi.value=''; };
+    document.getElementById('resetBtn').onclick=()=>{
+      LS.del(); loadData(JSON.parse(JSON.stringify(BUILTIN))); render();
+      document.getElementById('impMsg').innerHTML='<span class="ok">已還原為 HTML 內建資料。</span>';
+    };
+    const drop=document.getElementById('drop');
+    addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('on');});
+    addEventListener('dragleave',e=>{ if(e.relatedTarget===null) drop.classList.remove('on'); });
+    addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('on');
+      const f=e.dataTransfer.files[0]; if(f){ setTab('io'); importFile(f); } });
+  }
   addEventListener('keydown',e=>{
     if(S.tab!=='daily' || CAL.open) return;
     if(e.metaKey||e.ctrlKey||e.altKey) return;
@@ -2829,7 +2840,7 @@ function init(){
   try{ const th=localStorage.getItem('bondmkt.theme');
     if(th==='dark'||th==='light') document.documentElement.setAttribute('data-theme',th); }catch(e){}
   let boot=BUILTIN, note='';
-  try{ const saved=LS.get();
+  if(ADMIN) try{ const saved=LS.get();
     if(saved){
       let p=null;
       try{ p=JSON.parse(saved); }catch(e){ p=null; }
