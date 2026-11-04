@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!--__CSP__-->
-<title>台灣公債買賣斷市場觀測 V1.2.2</title>
+<title>台灣公債買賣斷市場觀測 V1.2.3</title>
 <style>
 /* ── 設計語彙：量化交易終端 ──────────────────────────────
    深色網格底、冷光章節色、等寬數字；資料是主角，介面以細線與微光界定層次。 */
@@ -128,6 +128,7 @@ h1{font-size:25px;font-weight:700;margin:3px 0 4px;letter-spacing:.03em;line-hei
 h1 .thin{color:var(--muted);font-weight:400;font-size:.78em}
 .metaline{font-family:var(--num);font-size:11.5px;color:var(--ink2);letter-spacing:0;line-height:1.7}
 .metaline b{color:var(--ink)}
+.disclaimer{margin-top:6px;font-size:11.5px;line-height:1.6;color:var(--muted);max-width:72em}
 header .row{position:relative;z-index:1}
 h2{font-size:15px;font-weight:650;margin:0;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
 h2::before{content:"";width:8px;height:8px;flex:none;transform:rotate(45deg);border-radius:1.5px;
@@ -437,6 +438,7 @@ body.printing .hint{background:none;padding:0}
     <div class="kicker">Taiwan Government Bonds · Outright Transactions<span id="appVer"></span></div>
     <h1>公債買賣斷市場觀測 <span class="thin">／ 日成交與冷門券追蹤</span></h1>
     <div class="metaline" id="metaLine"></div>
+    <div class="disclaimer">非官方資料，僅供參考，不構成任何投資建議。資料來源：櫃買中心買賣斷日檔、中央銀行開放資料；統計與分析由本工具自行計算，如有出入以官方公布為準。</div>
   </div>
   <div class="row">
     <button class="btn glass" id="themeBtn" title="切換深淺色"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>明／暗</button>
@@ -655,7 +657,7 @@ body.printing .hint{background:none;padding:0}
         <button class="btn noprint" id="wNext">後一週 ▶</button>
         <button class="btn noprint" id="wLast">最近完整週</button>
       </div>
-      <button class="btn sm noprint" id="wPrint" title="用瀏覽器列印（A4 直式 2 頁），可選「儲存為 PDF」。也可在終端機執行 python3 ~/Documents/BondMarket/weekly_pdf.py 直接產生 PDF">列印／存成 PDF</button>
+      <button class="btn sm noprint" id="wPrint" title="用瀏覽器列印（A4 直式 2 頁），可選「儲存為 PDF」">列印／存成 PDF</button>
     </div>
     <div class="sub noprint" id="wInfo" style="margin-top:6px"></div>
     <div class="wsum" id="wSummary"></div>
@@ -701,7 +703,7 @@ body.printing .hint{background:none;padding:0}
     <div class="hint">「距上次成交」是本週第一次成交距離本週之前最後一次成交的交易日數；超過 20 個交易日（約一個月）或資料期間內首次成交的，標示「久違」——冷門券久未成交後突然出現買賣，常是值得留意的訊號。「較上次」是本週最後成交對比本週之前最後一次成交；間隔很久時，這個變動包含了整段期間的市場利率變化。</div>
     <div class="wfoot printonly">註：1. 指標券為各天期最近發行且發行未滿 3 年之券，以該週最後交易日判定；「較前一週」＝同一檔指標券本週最後成交對比其本週之前最後一次成交，本週無成交者不計；圖中空心點為該週無成交時的最近一次成交。
       2. 非指標券「久違」＝距上次成交逾 20 個交易日或資料期間內首次成交；「較上次」涵蓋兩次成交間的全部利率變化。
-      3. 對曲線利差以回溯期間內各券最近成交內插之參考曲線計算，僅供相對比較。 4. 資料來源：櫃買中心買賣斷日檔（營業處所、等殖成交系統）；殖利率為成交面額加權。</div>
+      3. 對曲線利差以回溯期間內各券最近成交內插之參考曲線計算，僅供相對比較。 4. 資料來源：櫃買中心買賣斷日檔（營業處所、等殖成交系統）；殖利率為成交面額加權。 5. 本報告為非官方資料，僅供參考，不構成任何投資建議；如有出入以官方公布為準。</div>
   </div>
 </div></div>
 </section>
@@ -709,16 +711,13 @@ body.printing .hint{background:none;padding:0}
 <!-- ============ 匯出／匯入 ============ -->
 <section id="tab-io" class="hidden" role="tabpanel" aria-labelledby="tabbtn-io">
   <div class="card">
-    <h2>每日更新（直接向櫃買中心抓日檔）</h2>
-    <div class="sub">在終端機執行下面這行，會從本機資料檔的最後一天接著補到今天，抓完自動重新產生這個 HTML。</div>
-    <pre class="cmd">python3 ~/Documents/BondMarket/update.py</pre>
+    <h2>資料更新</h2>
+    <div class="sub">本頁資料每個交易日下午 5 點起自動向櫃買中心抓取當日買賣斷日檔並更新，櫃買較晚發布時會在 17:30、18:00、19:00 再試；更新後重新整理本頁即可看到最新資料。</div>
     <ul class="doc">
-      <li>指定期間：<code>python3 ~/Documents/BondMarket/update.py 2026-08-01 2026-08-21</code>（含頭尾）。只想重新產生 HTML 而不連網：加上 <code>--rebuild</code>。</li>
       <li>抓的是櫃買買賣斷日檔 <code>BDdcs001</code>（營業處所）與 <code>BDdys01a</code>（等殖成交系統），只留中央政府公債（券號 A＋5 碼，可含 R 尾碼），並排除處所檔中的附條件交易表。</li>
       <li>休市日、尚未發布的日子沒有日檔，會自動略過；同一天重抓會覆蓋原值，不會產生重複資料。</li>
-      <li>累積下來的資料存在 <code>~/Documents/BondMarket/data/records.csv</code>，可以自己拿去用。</li>
       <li>原始資料頁面：<a href="https://www.tpex.org.tw/zh-tw/bond/info/statistics-gb/day/ebts.html" target="_blank" rel="noreferrer">等殖成交系統</a>、<a href="https://www.tpex.org.tw/zh-tw/bond/info/statistics-gb/day/otc.html" target="_blank" rel="noreferrer">營業處所</a>。</li>
-      <li>更新完成後重新整理本頁即可。若之前勾過「記住這份資料」，只要新產生的內建資料比較新，本頁會自動改用新的。</li>
+      <li>若之前勾過「記住這份資料」，只要網頁內建的資料比較新，本頁會自動改用新的。</li>
     </ul>
   </div>
   <div class="card">
@@ -732,7 +731,7 @@ body.printing .hint{background:none;padding:0}
     </div>
     <div id="impMsg" class="hint"></div>
     <ul class="doc" style="margin-top:12px">
-      <li><b>.csv</b>：<code>update.py</code> 累積的 <code>data/records.csv</code>，或本工具匯出的「原始明細（分市場）」CSV。兩者都是「交易日 × 券別 × 市場」一列一筆、殖利率已是百分比。</li>
+      <li><b>.csv</b>：本工具資料檔 <code>records.csv</code>，或本工具匯出的「原始明細（分市場）」CSV。兩者都是「交易日 × 券別 × 市場」一列一筆、殖利率已是百分比。</li>
       <li><b>.xlsx</b>：GPT 產生的同格式彙整檔（需含「交易明細」工作表，欄位名稱不變），本頁會直接在瀏覽器內讀取，不必另外執行 Python。</li>
       <li><b>.json</b>：本工具匯出的資料備份檔，可在不同電腦間搬移或存檔備份。</li>
       <li>匯入只影響你這台電腦的瀏覽器，不會改動原始檔，也不會上傳到任何地方。</li>
@@ -770,7 +769,6 @@ body.printing .hint{background:none;padding:0}
       <li><b>冷門券的定義</b>：不是現行流通指標券的公債。指標券＝2／5／10／20／30 年期中，各天期最近發行、發行日已到、且發行未滿 3 年的那一檔；其餘（含卸任的舊指標券、老券）都算冷門券（非指標券）。指標券會隨新券發行換手，因此每一天的判定都是以當天為準。</li>
       <li><b>年期與發行日以官方資料為準</b>：取自財政部「中央公債標售概況表」（本頁內建版本的表列更新日期見下方檢核表），券號對照規則為 A＋民國年 2 碼＋類別 1 碼（甲=1、乙=2）＋序號 2 碼，例如 115甲6＝A15106。增額發行（標售表上標 ※）不改首次發行日，另外記錄最近一次增額日期；發行前交易（券號尾碼 R）沿用本券的發行資料。</li>
       <li>標售表上還沒有的券（更新日之後才發行）或早於表格起始年度的老券，才回退到<b>推估</b>：由券號民國年與當日剩餘年限推回到期日，取不超過推估區間的最大標準年期，發行日＝到期日−年期；這種值會標示「推估」。目前內建資料有 3 檔採推估（A15108、A90105、A93106），其餘 107 檔為官方值。實測推估與官方對照：110 檔中年期全數相符，發行日誤差中位數 2 天、最大 4 天。</li>
-      <li>要更新官方發行資料：下載新版標售概況表 PDF 後執行 <code>python3 ~/Documents/BondMarket/parse_issues.py 標售概況表.pdf</code>，再跑 <code>update.py --rebuild</code> 重新產生本頁。</li>
       <li>券號帶 R 者為<b>發行前交易</b>（when-issued，櫃買日檔自 102/02/01 起的標示），在本工具中單獨分列，且不列為現行指標券。</li>
       <li>匯入的 <code>.xlsx</code>／<code>.json</code> 一律當成不可信來源：驗證結構、索引與數值範圍後，<b>統計數字與檢核結果全部由資料本身重算</b>（不採用檔案裡宣稱的值），並強制標記為「瀏覽器匯入」。驗證不通過就整份退回。</li>
       <li><b>週報</b>：週＝週一至週五，預設顯示最近一個完整週。指標券以該週最後一個交易日的指標券為準，「較前一週」拿同一檔券本週最後一次成交對比它本週之前的最後一次成交（換券時不拿兩檔不同的券相減）；本週沒成交的天期不計算變動，圖上以空心點標出更早的成交。非指標券「久違成交」＝距上次成交超過 20 個交易日，或資料期間內首次成交。</li>
@@ -798,9 +796,10 @@ body.printing .hint{background:none;padding:0}
 /* ── 版本控管 ───────────────────────────────────────────
    每次改程式：調 APP_VERSION（功能、計算方式或資料格式變動進第二位，僅文字或外觀調整加第三位）、
    改 APP_DATE、在 CHANGELOG 最前面加一筆、<title> 同步，並另存 versions/template_<版號>.html。 */
-const APP_VERSION = 'V1.2.2';
-const APP_DATE = '2026-10-29';
+const APP_VERSION = 'V1.2.3';
+const APP_DATE = '2026-11-04';
 const CHANGELOG = [
+  ['V1.2.3', '2026-11-04', '發布為公開網頁（每交易日 17:00 自動更新）：拿掉只適用本機的終端機操作說明，改為網頁版的資料更新說明；報頭與週報列印附註加上非官方資料聲明。'],
   ['V1.2.2', '2026-11-04', '介面重新設計（使用者提供）：左側導覽列、量化交易終端風格配色、等寬數字字型；週報列印頁右上角改用介面字型，避免標題折行。'],
   ['V1.2.2', '2026-10-29', '天期走勢：「各天期成交殖利率」與「每日成交面額」兩張圖改用同一組左右邊界，橫軸日期上下對齊；個券檢視的三張時間圖一併對齊。'],
   ['V1.2.1', '2026-10-14', '週報列印版字級再放大（摘要 11.5pt、表格 10.3pt、圖上文字約 9pt）；非指標券年限分布圖移到第 2 頁，每日成交面額改為整頁寬；列印版表格欄名與日期改用較短寫法。'],
