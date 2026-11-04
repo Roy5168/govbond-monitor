@@ -1,0 +1,65 @@
+name: 每日更新並發布
+
+on:
+  schedule:
+    # 台灣時間 17:00、17:30、18:00、19:00（週一至週五）；櫃買偶爾晚發布，抓到後面幾次就不會再有新資料
+    - cron: "0 9 * * 1-5"
+    - cron: "30 9 * * 1-5"
+    - cron: "0 10 * * 1-5"
+    - cron: "0 11 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["template.html", "bonddata.py", "update.py", "parse_issues.py", ".github/workflows/update.yml"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Taipei
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install xlrd==2.0.2
+
+      - name: 抓櫃買日檔與官方發行資料
+        run: python update.py
+
+      - name: 確保網頁存在（沒有新資料時 update.py 不會重產）
+        run: |
+          [ -f 公債市場觀測.html ] || python update.py --rebuild
+          mkdir -p _site && cp 公債市場觀測.html _site/index.html
+
+      - name: 資料有變動才寫回版本庫
+        run: |
+          git config user.name "govbond-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/records.csv data/issues.csv
+          if git diff --cached --quiet; then echo "資料沒有變動"; else
+            git commit -m "資料更新至 $(cut -d, -f1 data/records.csv | sort | tail -1)" && git push; fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: update
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

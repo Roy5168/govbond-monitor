@@ -1,0 +1,12 @@
+# 產出檔（網頁由 GitHub Actions 每日產生後直接部署，不進版本庫，避免每天多一份 450KB）
+公債市場觀測.html
+公債市場觀測- classic.html
+index.html
+out/
+_site/
+# 本機備份與暫存
+JSON/
+公債資料備份_*.json
+__pycache__/
+.DS_Store
+data/*.pdf
