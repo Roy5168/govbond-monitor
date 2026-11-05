@@ -331,7 +331,7 @@ def build_payload(rows, src_label, extra_checks=None):
 #   X-Frame-Options: DENY
 CSP_TMPL = ('<meta http-equiv="Content-Security-Policy" content="'
             "default-src 'none'; script-src '{hash}'; style-src 'unsafe-inline'; "
-            "img-src data:; font-src local; connect-src 'none'; object-src 'none'; "
+            "img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; "
             "base-uri 'none'; form-action 'none'"
             '">')
 

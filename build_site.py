@@ -33,7 +33,7 @@ SALT = hashlib.sha256(b"govbond-monitor/admin/v1").digest()[:16]
 
 WRAP_CSP = ('<meta http-equiv="Content-Security-Policy" content="'
             "default-src 'none'; script-src {hashes}; style-src 'unsafe-inline'; "
-            "img-src data:; font-src local; connect-src 'none'; object-src 'none'; "
+            "img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; "
             "base-uri 'none'; form-action 'none'"
             '">')
 

@@ -1,0 +1,2881 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--__CSP__-->
+<title>台灣公債買賣斷市場觀測 V1.3.2</title>
+<style>
+/* ── 設計語彙：量化交易終端 ──────────────────────────────
+   深色網格底、冷光章節色、等寬數字；資料是主角，介面以細線與微光界定層次。 */
+:root{
+  color-scheme: light;
+  --plane:#eef2f7; --surface:#ffffff; --surface2:#f6f8fb; --ink:#0b1424; --ink2:#3d4b5e; --muted:#7a8799;
+  --grid:#e3e9f1; --axis:#c3cdd9; --border:rgba(15,40,80,.12); --rule:#0b1424;
+  --chip:#eef3f9; --wash:rgba(30,100,200,.045); --gridline:rgba(15,40,80,.045); --term:#0b1220; --termink:#cfe3f7;
+  --a-daily:#0369a1; --a-tenor:#047857; --a-bond:#c2410c;
+  --a-cold:#a16207;  --a-io:#6d28d9;    --a-info:#475569; --a-week:#be185d;
+  --b-daily:#0ea5e9; --b-tenor:#10b981; --b-bond:#f97316;
+  --b-cold:#eab308;  --b-io:#8b5cf6;    --b-info:#94a3b8; --b-week:#ec4899;
+  --accent:var(--a-daily); --accent2:var(--b-daily); --on-accent:#fff;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s8:#e34948;
+  --seq1:#cde2fb; --seq2:#9ec5f4; --seq3:#5598e7; --seq4:#2a78d6; --seq5:#1c5cab; --seq6:#0d366b;
+  --warn:#f0a500; --good:#0a9a3c; --crit:#d03b3b;
+  --ui:"SF Pro Text","Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --lat:var(--ui);
+  --serif:var(--ui); --sans:var(--ui);
+  --num:"SF Mono","JetBrains Mono","Cascadia Mono",Consolas,ui-monospace,Menlo,"PingFang TC","Microsoft JhengHei",monospace;
+  --mono:var(--num);
+  --glow:0 0 0 1px color-mix(in oklab,var(--accent) 30%,transparent),0 6px 22px -8px color-mix(in oklab,var(--accent) 55%,transparent);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --plane:#060a11; --surface:#0c131d; --surface2:#101925; --ink:#e6edf5; --ink2:#a6b3c3; --muted:#6f7d90;
+    --grid:#18222f; --axis:#2a3748; --border:rgba(120,170,230,.13); --rule:#3c4d62;
+    --chip:#131d2a; --wash:rgba(90,170,255,.06); --gridline:rgba(110,160,220,.05); --term:#04070c; --termink:#bfe6ff;
+    --a-daily:#38bdf8; --a-tenor:#34d399; --a-bond:#fb923c;
+    --a-cold:#facc15;  --a-io:#a78bfa;    --a-info:#94a3b8; --a-week:#f472b6;
+    --b-daily:#0284c7; --b-tenor:#059669; --b-bond:#ea580c;
+    --b-cold:#ca8a04;  --b-io:#7c3aed;    --b-info:#64748b; --b-week:#db2777;
+    --on-accent:#04111c;
+    --s1:#3b9eff; --s2:#ff7a45; --s3:#22c993; --s4:#f5b301; --s5:#f06ba8; --s8:#ff5c5c;
+    --seq1:#0f2a4a; --seq2:#14406f; --seq3:#1d5fa3; --seq4:#2f86d9; --seq5:#62aef0; --seq6:#b6dcff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --plane:#060a11; --surface:#0c131d; --surface2:#101925; --ink:#e6edf5; --ink2:#a6b3c3; --muted:#6f7d90;
+  --grid:#18222f; --axis:#2a3748; --border:rgba(120,170,230,.13); --rule:#3c4d62;
+  --chip:#131d2a; --wash:rgba(90,170,255,.06); --gridline:rgba(110,160,220,.05); --term:#04070c; --termink:#bfe6ff;
+  --a-daily:#38bdf8; --a-tenor:#34d399; --a-bond:#fb923c;
+  --a-cold:#facc15;  --a-io:#a78bfa;    --a-info:#94a3b8; --a-week:#f472b6;
+  --b-daily:#0284c7; --b-tenor:#059669; --b-bond:#ea580c;
+  --b-cold:#ca8a04;  --b-io:#7c3aed;    --b-info:#64748b; --b-week:#db2777;
+  --on-accent:#04111c;
+  --s1:#3b9eff; --s2:#ff7a45; --s3:#22c993; --s4:#f5b301; --s5:#f06ba8; --s8:#ff5c5c;
+  --seq1:#0f2a4a; --seq2:#14406f; --seq3:#1d5fa3; --seq4:#2f86d9; --seq5:#62aef0; --seq6:#b6dcff;
+}
+*{box-sizing:border-box}
+html{-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--plane);color:var(--ink);font-family:var(--ui);font-size:15.5px;line-height:1.55;
+  background-image:linear-gradient(var(--gridline) 1px,transparent 1px),linear-gradient(90deg,var(--gridline) 1px,transparent 1px);
+  background-size:28px 28px;background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;transition:background .5s;
+  background:radial-gradient(900px 520px at 88% -12%,color-mix(in oklab,var(--accent) 16%,transparent),transparent 70%),
+             radial-gradient(700px 500px at 0% 110%,color-mix(in oklab,var(--accent2) 8%,transparent),transparent 70%)}
+a{color:var(--accent);text-underline-offset:2px} a:hover{color:var(--accent2)}
+body[data-section="daily"]{--accent:var(--a-daily);--accent2:var(--b-daily)}
+body[data-section="tenor"]{--accent:var(--a-tenor);--accent2:var(--b-tenor)}
+body[data-section="bond"] {--accent:var(--a-bond); --accent2:var(--b-bond)}
+body[data-section="cold"] {--accent:var(--a-cold); --accent2:var(--b-cold)}
+body[data-section="week"] {--accent:var(--a-week); --accent2:var(--b-week)}
+body[data-section="io"]   {--accent:var(--a-io);   --accent2:var(--b-io)}
+body[data-section="info"] {--accent:var(--a-info); --accent2:var(--b-info)}
+
+/* ── 外框：左側導覽軌 + 主工作區 ───────────────────────── */
+div.wrap{position:relative;z-index:1;display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:22px;
+  padding:22px 14px;background:color-mix(in oklab,var(--surface) 88%,transparent);backdrop-filter:blur(10px);
+  border-right:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:11px;padding:0 6px}
+.brand .mark{width:38px;height:38px;flex:none;border-radius:9px;display:grid;place-items:center;color:var(--on-accent);
+  background:linear-gradient(140deg,var(--accent),var(--accent2));box-shadow:var(--glow);transition:background .4s}
+.brand .mark svg{width:22px;height:22px}
+.brand b{display:block;font-size:16px;letter-spacing:.04em;line-height:1.25}
+.brand small{display:block;font-family:var(--num);font-size:11px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.navlab{font-family:var(--num);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);padding:0 10px;margin-bottom:-12px}
+.main{min-width:0;padding:18px 28px 72px;max-width:1440px;width:100%}
+
+/* ── 頁籤：圖示＋中英文標籤 ───────────────────────────── */
+.tabs{display:flex;flex-direction:column;gap:4px;margin:0}
+.tab{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;cursor:pointer;
+  padding:9px 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ink2);
+  transition:background .15s,color .15s,border-color .15s}
+.tab .ti{width:34px;height:34px;flex:none;padding:7.5px;border-radius:7px;border:1px solid var(--border);
+  background:var(--surface2);color:var(--tc,var(--ink2));transition:all .2s}
+.tab .tl{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.tab .tl b{font-size:15px;font-weight:600;letter-spacing:.03em;color:inherit}
+.tab .tl small{font-family:var(--num);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.tab::after{content:attr(data-no);margin-left:auto;font-family:var(--num);font-size:11px;letter-spacing:.06em;color:var(--muted);opacity:.7}
+.tab:hover{background:var(--wash);color:var(--ink);border-color:var(--border)}
+.tab:hover .ti{border-color:color-mix(in oklab,var(--tc) 45%,transparent)}
+.tab[data-tab="daily"]{--tc:var(--a-daily)} .tab[data-tab="tenor"]{--tc:var(--a-tenor)} .tab[data-tab="bond"]{--tc:var(--a-bond)}
+.tab[data-tab="cold"]{--tc:var(--a-cold)}   .tab[data-tab="week"]{--tc:var(--a-week)}   .tab[data-tab="io"]{--tc:var(--a-io)}
+.tab[data-tab="info"]{--tc:var(--a-info)}
+.tab[aria-selected="true"]{color:var(--ink);background:color-mix(in oklab,var(--tc) 11%,transparent);
+  border-color:color-mix(in oklab,var(--tc) 32%,transparent)}
+.tab[aria-selected="true"]::before{content:"";position:absolute;left:-15px;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;
+  background:var(--tc);box-shadow:0 0 12px var(--tc)}
+.tab[aria-selected="true"] .ti{background:var(--tc);border-color:var(--tc);color:var(--on-accent);
+  box-shadow:0 0 0 3px color-mix(in oklab,var(--tc) 18%,transparent),0 4px 16px -4px var(--tc)}
+.tab[aria-selected="true"]::after{color:var(--tc);opacity:1}
+.tab[aria-selected="true"] .tl small{color:var(--tc)}
+
+/* ── 報頭 ───────────────────────────────────────────── */
+header{position:relative;margin:0 0 16px;padding:20px 24px 18px;border-radius:12px;overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+header::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--a-daily) 0 14.3%,var(--a-tenor) 0 28.6%,var(--a-bond) 0 42.9%,
+    var(--a-cold) 0 57.1%,var(--a-week) 0 71.4%,var(--a-io) 0 85.7%,var(--a-info) 0 100%)}
+header::after{content:"";position:absolute;right:-60px;top:-140px;width:420px;height:300px;pointer-events:none;
+  background:radial-gradient(closest-side,color-mix(in oklab,var(--accent) 22%,transparent),transparent);transition:background .45s}
+.masthead{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kicker{display:flex;align-items:center;gap:8px;font-family:var(--num);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.kicker::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 22%,transparent),0 0 10px var(--accent)}
+h1{font-size:27.5px;font-weight:700;margin:3px 0 4px;letter-spacing:.03em;line-height:1.2;color:var(--ink)}
+h1 .thin{color:var(--muted);font-weight:400;font-size:.78em}
+.metaline{font-family:var(--num);font-size:12.5px;color:var(--ink2);letter-spacing:0;line-height:1.7}
+.metaline b{color:var(--ink)}
+.disclaimer{margin-top:6px;font-size:12.5px;line-height:1.6;color:var(--muted);max-width:72em}
+header .row{position:relative;z-index:1}
+h2{font-size:16.5px;font-weight:650;margin:0;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
+h2::before{content:"";width:8px;height:8px;flex:none;transform:rotate(45deg);border-radius:1.5px;
+  background:var(--accent);box-shadow:0 0 8px color-mix(in oklab,var(--accent) 70%,transparent)}
+.sub{color:var(--muted);font-size:13px}
+
+/* ── 控制元件 ───────────────────────────────────────── */
+button,select,input{font:inherit;color:inherit}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;
+  padding:6px 12px;cursor:pointer;font-size:14.5px;line-height:1.35;color:var(--ink);
+  transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}
+.btn:hover{border-color:color-mix(in oklab,var(--accent) 60%,transparent);color:var(--accent);
+  box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 12%,transparent)}
+.btn:active{transform:translateY(1px)}
+.btn.sm{padding:4px 10px;font-size:13px;border-radius:6px}
+.btn[data-export]{font-size:13px}
+.btn[data-export]::before{content:"";width:12px;height:12px;flex:none;background:currentColor;opacity:.8;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12M7 10l5 5 5-5M4 20h16'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12M7 10l5 5 5-5M4 20h16'/%3E%3C/svg%3E") center/contain no-repeat}
+.btn .ti{width:15px;height:15px}
+.seg{display:inline-flex;gap:2px;padding:2px;border-radius:8px;background:var(--surface2);border:1px solid var(--border)}
+.seg .btn{border-color:transparent;background:transparent;border-radius:6px;font-family:var(--num);font-size:12.5px}
+.seg .btn:hover{box-shadow:none;background:var(--wash)}
+.seg .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600;
+  box-shadow:0 2px 10px -2px color-mix(in oklab,var(--accent) 70%,transparent)}
+#tenorPick .btn i{display:inline-block;width:8px;height:8px;border-radius:50%;opacity:.4}
+#tenorPick .btn[aria-pressed="true"] i{opacity:1;box-shadow:0 0 0 1.5px var(--on-accent)}
+#tenorPick .btn[data-tenor="2"] i{background:var(--s1)} #tenorPick .btn[data-tenor="5"] i{background:var(--s2)}
+#tenorPick .btn[data-tenor="10"] i{background:var(--s3)} #tenorPick .btn[data-tenor="20"] i{background:var(--s4)}
+#tenorPick .btn[data-tenor="30"] i{background:var(--s5)}
+.btn.glass{position:relative;z-index:1;font-size:14px}
+select,input[type=search]{background-color:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:14.5px;color:var(--ink)}
+select{-webkit-appearance:none;appearance:none;padding-right:28px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%238595a8' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;background-size:11px}
+select.btn{display:inline-block;padding-right:26px}
+select:hover,input[type=search]:hover{border-color:color-mix(in oklab,var(--accent) 50%,transparent)}
+input[type=checkbox]{accent-color:var(--accent)}
+select:focus-visible,input:focus-visible,.btn:focus-visible,.tab:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ── 控制列 ─────────────────────────────────────────── */
+.filters{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;padding:12px 18px;margin-bottom:18px}
+.filters label{font-size:13px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.filters label>.ti{width:16px;height:16px;color:var(--accent);flex:none}
+.filters label>span,.lab{font-family:var(--num);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.filters .sep{width:1px;align-self:stretch;background:var(--border)}
+#coldCount{font-family:var(--num);font-size:12.5px;color:var(--accent);margin-left:auto}
+
+/* ── 卡片 ───────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:16px 20px 18px;margin-bottom:16px;position:relative}
+.card::before{content:"";position:absolute;top:-1px;left:20px;width:54px;height:2px;border-radius:0 0 2px 2px;
+  background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.card::after{content:"";position:absolute;top:8px;right:8px;width:7px;height:7px;border-top:1.5px solid var(--axis);border-right:1.5px solid var(--axis);pointer-events:none}
+.card>.sub{margin-top:6px}
+.card>h2+.sub,.cardhead+.sub{margin-top:6px}
+section{animation:rise .34s cubic-bezier(.22,.7,.3,1) both}
+.card{animation:rise .38s cubic-bezier(.22,.7,.3,1) both}
+.card:nth-of-type(2){animation-delay:.045s}
+.card:nth-of-type(3){animation-delay:.09s}
+.card:nth-of-type(4){animation-delay:.13s}
+@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── 指標列 ─────────────────────────────────────────── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.kpi{position:relative;padding:14px 18px 15px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:2px;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.kpi::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;pointer-events:none;
+  background:radial-gradient(closest-side,color-mix(in oklab,var(--accent) 13%,transparent),transparent)}
+.kpi .k{font-family:var(--num);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.kpi .v{font-family:var(--num);font-size:28.5px;font-weight:600;letter-spacing:-.02em;margin-top:6px;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12.5px;color:var(--ink2);margin-top:6px;line-height:1.5}
+
+/* ── 圖表 ───────────────────────────────────────────── */
+.chart{position:relative;width:100%;margin-top:8px}
+.chart svg{display:block;width:100%;overflow:visible;font-family:var(--ui)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--ink2);margin:12px 0 2px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+
+/* ── 表格 ───────────────────────────────────────────── */
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap}
+td{font-family:var(--num);font-size:14px}
+td.l{font-family:var(--ui);font-size:14.5px}
+th{font-family:var(--num);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  font-weight:500;position:sticky;top:0;background:var(--surface2);border-bottom:1px solid var(--axis);z-index:1}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+th.c,td.c{text-align:center}
+#wBenchTable th,#wBenchTable td{padding-top:4px;padding-bottom:4px;line-height:1.35}
+#wBenchTable .chip{padding:0 5px;line-height:1.4}
+tbody tr{transition:background .1s}
+tbody tr[tabindex]{cursor:pointer}
+tbody tr[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+tbody tr:hover{background:var(--wash);box-shadow:inset 2px 0 0 var(--accent)}
+.scrolly{max-height:440px;overflow:auto;margin-top:10px;border:1px solid var(--grid);border-radius:8px}
+.scrollx{overflow-x:auto;margin-top:10px;border:1px solid var(--grid);border-radius:8px}
+.scrolly table tr:last-child td,.scrollx table tr:last-child td{border-bottom:0}
+.scrolly::-webkit-scrollbar,.scrollx::-webkit-scrollbar,.hmwrap::-webkit-scrollbar,.rail::-webkit-scrollbar{width:8px;height:8px}
+.scrolly::-webkit-scrollbar-thumb,.scrollx::-webkit-scrollbar-thumb,.hmwrap::-webkit-scrollbar-thumb,.rail::-webkit-scrollbar-thumb{background:var(--axis);border-radius:8px}
+.two>*{min-width:0}
+.card,.kpis,section{min-width:0}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+th .mark{margin-left:4px;color:var(--accent);font-size:10px;vertical-align:1px}
+th.on{color:var(--accent)}
+
+.chip{display:inline-block;font-family:var(--num);font-size:11px;letter-spacing:.04em;padding:1px 7px;
+  border-radius:4px;background:var(--chip);color:var(--ink2);border:1px solid var(--border)}
+.chip.cold{background:transparent;border:1px solid var(--muted);color:var(--ink2)}
+.chip.bench{background:var(--accent);border:1px solid var(--accent);color:var(--on-accent);font-weight:600}
+.chip.wi{background:transparent;border:1px solid var(--warn);color:var(--ink2)}
+.pos{color:var(--crit)} .neg{color:var(--good)}
+#tip{position:fixed;pointer-events:none;z-index:9;background:color-mix(in oklab,var(--surface) 92%,transparent);backdrop-filter:blur(8px);
+  border:1px solid color-mix(in oklab,var(--accent) 45%,transparent);
+  border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.55;box-shadow:0 14px 36px rgba(0,0,0,.28);
+  opacity:0;transition:opacity .08s;max-width:300px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:12px;padding:9px 12px;background:var(--wash);border-radius:8px;line-height:1.7}
+.hint b{color:var(--ink2)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.two{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:1180px){.two{grid-template-columns:400px 1fr}}
+.hidden{display:none}
+.hmwrap{overflow:auto;max-height:560px;border:1px solid var(--grid);border-radius:8px;margin-top:10px}
+#drop{position:fixed;inset:0;background:color-mix(in oklab,var(--plane) 70%,transparent);backdrop-filter:blur(4px);
+  border:2px dashed var(--accent);z-index:20;display:none;align-items:center;justify-content:center;
+  font-size:22px;letter-spacing:.06em;color:var(--ink)}
+#drop.on{display:flex}
+.ok{color:var(--good)} .bad{color:var(--crit)}
+ul.doc{color:var(--ink2);font-size:14.5px;line-height:1.9;padding-left:18px;margin:10px 0 0}
+ul.doc li{margin-bottom:3px}
+ul.doc li::marker{color:var(--accent);content:"▸  "}
+.cmd{font-family:var(--mono);font-size:14px;background:var(--term);color:var(--termink);border:1px solid var(--border);
+  padding:12px 16px;margin:12px 0 0;border-radius:8px;overflow-x:auto;user-select:all}
+.cmd::before{content:"$ ";color:var(--a-tenor);user-select:none}
+code{font-family:var(--mono);font-size:12.5px;background:var(--chip);padding:1px 6px;border-radius:4px;border:1px solid var(--border)}
+.cardhead{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.wklabel{font-family:var(--num)}
+
+@media(max-width:1080px){
+  div.wrap{display:block}
+  .rail{position:sticky;top:0;z-index:15;height:auto;flex-direction:row;align-items:center;gap:14px;padding:10px 14px;
+    border-right:0;border-bottom:1px solid var(--border);overflow-x:auto}
+  .brand .txt,.navlab{display:none}
+  .tabs{flex-direction:row;gap:4px}
+  .tab{width:auto;white-space:nowrap;padding:6px 10px 6px 6px;gap:8px}
+  .tab .ti{width:28px;height:28px;padding:5.5px}
+  .tab .tl small,.tab::after{display:none}
+  .tab[aria-selected="true"]::before{left:10px;right:10px;top:auto;bottom:-11px;width:auto;height:2px}
+  .main{padding:16px 18px 60px}
+}
+@media(max-width:640px){
+  .main{padding:12px 12px 56px}
+  header{padding:18px 16px 16px}
+  h1{font-size:22px}
+  .filters{gap:12px}
+  table{font-size:14px}
+}
+
+/* ── 週報 ───────────────────────────────────────────── */
+.wklabel{font-family:var(--num);font-weight:600;font-size:16.5px;letter-spacing:.02em;padding:0 6px;white-space:nowrap}
+.wklabel small{font-weight:400;font-size:13px;color:var(--muted);margin-left:6px}
+.wsum{margin-top:12px;padding:10px 14px;background:var(--wash);border-left:3px solid var(--accent);
+  font-size:14.5px;line-height:1.85;color:var(--ink)}
+.wsum b{font-family:var(--num)}
+.pair{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:1000px){.pair{grid-template-columns:1fr 1fr}}
+.pair>*{min-width:0}
+.chip.long{background:transparent;border:1px solid var(--accent);color:var(--accent);font-weight:600}
+@media print{
+  body{background:#fff} body::before{display:none}
+  .filters,.tabs,header .row,.noprint,[data-export]{display:none!important}
+  header{box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card,.kpis{break-inside:avoid;box-shadow:none;animation:none}
+  .scrolly{max-height:none;overflow:visible}
+  #tip{display:none}
+}
+/* ── 週報列印版（A4 直式，固定 2 頁）──────────────────────
+   列印時 body 加上 .printing，並以固定紙寬重畫圖表（frame 放大 viewBox，
+   印出來字級約 7pt）；第 1 頁：摘要、指標、指標券變動、每日面額與年限分布；
+   第 2 頁：非指標券明細。
+   分頁不交給瀏覽器：每頁是一張固定大小的 .sheet，裡面的 .sheet-in 先用 zoom 放大 3 倍排版、
+   再用 transform 縮回原大小。原因是瀏覽器的「最小字級」設定（Safari／Chrome 都有，常見 12px）
+   會把 7pt 的表格字硬撐到 9pt，表格因此超出紙寬，Safari 再把整頁縮小、圖表被擠到下一頁。
+   放大 3 倍後最小的字也有 24px，高於任何最小字級選項，排出來的版面就與設定無關。 */
+@page{size:A4 portrait;margin:10mm 10mm 11mm}
+.printonly{display:none}
+body.printing{background:#fff;font-size:calc(11pt*var(--pz,1));-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body.printing::before{display:none}
+body.printing *{animation:none!important;transition:none!important}
+body.printing .wrap{width:190mm;max-width:none;padding:0;margin:0}
+body.printing section{animation:none}
+body.printing .sheet{box-sizing:border-box;width:190mm;height:275mm;overflow:hidden;contain:size;break-after:page;break-inside:avoid;page-break-after:always;page-break-inside:avoid}
+body.printing .sheet:last-child{break-after:auto;page-break-after:auto}
+body.printing .sheet-in{width:190mm;zoom:3;transform:scale(calc(var(--fit,1)/3));transform-origin:0 0}
+body.printing header,body.printing .filters,body.printing .tabs,body.printing .noprint,
+body.printing [data-export],body.printing .hint,body.printing #tip,body.printing th .mark{display:none!important}
+body.printing .printonly{display:block}
+body.printing .printhead{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;
+  border-bottom:1.5pt solid var(--a-week);padding:0 0 2mm;margin:0 0 3mm}
+.ph-kicker{font-family:var(--num);font-size:calc(7.5pt*var(--pz,1));letter-spacing:.2em;text-transform:uppercase;color:var(--a-week)}
+.ph-title{min-width:0;font-family:var(--serif);font-size:calc(17pt*var(--pz,1));font-weight:600;line-height:1.2;letter-spacing:.03em}
+.ph-title small{font-size:calc(10pt*var(--pz,1));font-weight:400;color:var(--ink2);margin-left:3mm}
+.ph-meta{flex-shrink:0;white-space:nowrap;font-family:var(--ui);font-size:calc(8pt*var(--pz,1));color:var(--ink2);text-align:right;line-height:1.5}
+body.printing .card{padding:2.2mm 3.2mm 2.6mm;margin-bottom:2.6mm;break-inside:auto;border-radius:0;box-shadow:none}
+body.printing h2{font-size:calc(13pt*var(--pz,1))}
+body.printing h2::before{height:11pt}
+body.printing .sub{font-size:calc(9pt*var(--pz,1));line-height:1.45}
+body.printing .legend{font-size:calc(9.5pt*var(--pz,1));gap:3mm;margin:1mm 0 0}
+body.printing .legend i{width:7.5pt;height:7.5pt;margin-right:3px}
+body.printing .wsum{font-size:calc(11.5pt*var(--pz,1));line-height:1.55;margin-top:0;padding:1.8mm 3mm}
+body.printing .kpis{grid-template-columns:repeat(4,1fr);margin-bottom:2.6mm!important;break-inside:auto}
+body.printing .kpi{padding:1.8mm 3mm}
+body.printing .kpi .k{font-size:calc(9.5pt*var(--pz,1));letter-spacing:.06em}
+body.printing .kpi .v{font-size:calc(20pt*var(--pz,1));margin-top:.6mm}
+body.printing .kpi .v span{font-size:calc(11pt*var(--pz,1))!important}
+body.printing .kpi .d{font-size:calc(9.2pt*var(--pz,1));margin-top:.6mm;line-height:1.35}
+body.printing .pair{grid-template-columns:1fr 1fr;gap:4mm}
+body.printing .chart{margin-top:1mm}
+body.printing .scrollx,body.printing .scrolly{overflow:visible;max-height:none;margin-top:1.2mm}
+body.printing table{font-size:calc(10.3pt*var(--pz,1))}
+body.printing th,body.printing td{padding:.75mm .8mm;line-height:1.32;font-size:calc(10.3pt*var(--pz,1));position:static}
+body.printing th{font-size:calc(8.8pt*var(--pz,1));letter-spacing:0}
+body.printing thead{display:table-header-group}
+body.printing td.wrap{white-space:normal;line-height:1.3;max-width:34mm}
+body.printing .kpi .d,body.printing .ph-meta{overflow-wrap:break-word}
+body.printing #wBenchTable th,body.printing #wBenchTable td{padding-top:.7mm;padding-bottom:.7mm;line-height:1.3}
+body.printing #wBenchTable .chip{line-height:1.2;padding:0 2px}
+body.printing .chip{font-size:calc(8pt*var(--pz,1));padding:0 3px}
+body.printing .sheet-in>:last-child{margin-bottom:0}
+/* Safari 對圖上的字是以「最後畫在螢幕上的大小」套最小字級；geometricPrecision 會改成只看指定字級（已放大 3 倍），圖上的字才不會被撐大 */
+body.printing svg text{text-rendering:geometricPrecision}
+body.printing #wColdCard.dense td,body.printing #wColdCard.dense th{padding:.25mm .8mm;line-height:1.27;font-size:calc(9.6pt*var(--pz,1))}
+body.printing .wfoot{font-size:calc(8.6pt*var(--pz,1));color:var(--ink2);line-height:1.5;margin-top:1mm;border-top:.5pt solid var(--grid);padding-top:1.2mm}
+
+/* ── 小月曆 ─────────────────────────────────────────── */
+.calwrap{position:relative;display:inline-block}
+.card.raise{z-index:50}          /* 月曆開啟時抬高整張卡片（卡片動畫會各自形成堆疊層）*/
+.datebtn{font-family:var(--num);font-weight:600;min-width:150px;letter-spacing:.02em}
+.datebtn::after{content:" ▾";font-size:11px;color:var(--muted)}
+.cal{position:absolute;top:calc(100% + 6px);left:0;z-index:30;background:var(--surface);
+  border:1px solid var(--border);border-radius:4px;padding:10px 12px 8px;
+  box-shadow:0 12px 32px rgba(14,19,25,.22);width:324px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cal-title{font-family:var(--num);font-weight:600;font-size:15.5px;letter-spacing:.02em}
+.cal-title small{display:block;font-weight:400;font-size:12px;color:var(--muted);letter-spacing:0}
+.cal-nav{display:flex;gap:2px}
+.cal-nav .btn{padding:2px 7px;font-size:13px;line-height:1.4}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{text-align:center;font-family:var(--num);font-size:11px;letter-spacing:.08em;color:var(--muted);padding:2px 0 4px}
+.cd{height:32px;border:0;border-radius:3px;background:transparent;font-family:var(--num);font-size:14.5px;
+  color:var(--muted);cursor:default;position:relative;padding:0}
+.cd.has{color:var(--ink);font-weight:700;cursor:pointer;background:var(--chip)}
+.cd.has::after{content:"";position:absolute;left:50%;bottom:3px;width:4px;height:4px;border-radius:50%;
+  background:var(--accent);transform:translateX(-50%)}
+.cd.none{color:var(--ink2);cursor:pointer;font-weight:400;background:transparent;
+  background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--grid) 3px 4px)}
+.cd.has:hover,.cd.none:hover{outline:1.5px solid var(--accent);outline-offset:-1.5px}
+.cd.off{opacity:.35}
+.cd.sel{background:var(--accent)!important;color:var(--on-accent)!important;background-image:none!important}
+.cd.sel::after{background:var(--on-accent)}
+.cd.today{box-shadow:inset 0 0 0 1.5px var(--accent2)}
+.cd:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cal-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;padding-top:6px;border-top:1px solid var(--grid);
+  font-size:11.5px;color:var(--ink2);white-space:nowrap}
+.cal-legend i{display:inline-block;width:14px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:4px;background:var(--chip);position:relative}
+.cal-legend i.has::after{content:"";position:absolute;left:50%;bottom:1px;width:3px;height:3px;border-radius:50%;background:var(--accent);transform:translateX(-50%)}
+.cal-legend i.none{background-image:repeating-linear-gradient(135deg,transparent 0 3px,var(--grid) 3px 4px)}
+.cal-legend i.off{opacity:.35;border:1px solid var(--border)}
+
+.cal{border-radius:10px;box-shadow:0 18px 44px rgba(0,0,0,.3);border-color:color-mix(in oklab,var(--accent) 35%,transparent)}
+.cd{border-radius:6px}
+.datebtn{justify-content:center}
+.wsum{border-radius:0 8px 8px 0}
+@media print{ .rail{display:none!important} div.wrap{display:block} .main{padding:0} body{background-image:none} }
+body.printing{background-image:none;--num:"Times New Roman",Times,"PingFang TC",sans-serif;--ui:"Times New Roman",Times,"PingFang TC",sans-serif}
+body.printing div.wrap{display:block}
+body.printing .rail{display:none!important}
+body.printing .main{padding:0;max-width:none}
+body.printing .kpis{gap:0;border:1px solid var(--border)}
+body.printing .kpi{border-radius:0;border:0;border-right:1px solid var(--grid)}
+body.printing .kpi::after,body.printing .card::after{display:none}
+body.printing .scrolly,body.printing .scrollx{border:0;border-radius:0}
+body.printing .hint{background:none;padding:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside class="rail">
+  <div class="brand"><div class="mark"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 18.5c3.5-.6 5.5-3.2 7.3-6.2S14.6 6.4 20.5 5.5"/><circle cx="7" cy="16.6" r="1.3" fill="currentColor"/><circle cx="12" cy="10.2" r="1.3" fill="currentColor"/><circle cx="17" cy="6.3" r="1.3" fill="currentColor"/></svg></div>
+    <div class="txt"><b>公債市場觀測</b><small>TGB · Market Monitor</small></div></div>
+  <div class="navlab">Modules</div>
+  <nav class="tabs" role="tablist" aria-label="檢視分頁" aria-orientation="vertical">
+    <button class="tab" role="tab" id="tabbtn-daily" aria-controls="tab-daily" data-tab="daily" data-no="01" aria-selected="true"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.2"/><rect x="14" y="3" width="7" height="5" rx="1.2"/><rect x="14" y="12" width="7" height="9" rx="1.2"/><rect x="3" y="16" width="7" height="5" rx="1.2"/></svg><span class="tl"><b>每日總覽</b><small aria-hidden="true">Daily Overview</small></span></button>
+    <button class="tab" role="tab" id="tabbtn-tenor" aria-controls="tab-tenor" data-tab="tenor" data-no="02" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15.5l4-5 3 3 5.5-6.5"/><circle cx="19.5" cy="7" r="1.1" fill="currentColor"/></svg><span class="tl"><b>天期走勢</b><small aria-hidden="true">Tenor Trends</small></span></button>
+    <button class="tab" role="tab" id="tabbtn-bond" aria-controls="tab-bond" data-tab="bond" data-no="03" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.8-4.8"/><path d="M7.8 10.5h5.4M10.5 7.8v5.4"/></svg><span class="tl"><b>個券檢視</b><small aria-hidden="true">Bond Inspector</small></span></button>
+    <button class="tab" role="tab" id="tabbtn-cold" aria-controls="tab-cold" data-tab="cold" data-no="04" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12l6.4-6.4"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg><span class="tl"><b>冷門券雷達</b><small aria-hidden="true">Illiquid Radar</small></span></button>
+    <button class="tab" role="tab" id="tabbtn-week" aria-controls="tab-week" data-tab="week" data-no="05" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6.2a1.2 1.2 0 0 0-1.2 1.2v15.6A1.2 1.2 0 0 0 6.2 21h11.6a1.2 1.2 0 0 0 1.2-1.2V8z"/><path d="M14 3v5h5"/><path d="M8.5 13h7M8.5 17h4.5"/></svg><span class="tl"><b>週報</b><small aria-hidden="true">Weekly Report</small></span></button>
+<!--ADMIN{-->
+    <button class="tab" role="tab" id="tabbtn-io" aria-controls="tab-io" data-tab="io" data-no="06" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20V4M3 8l4-4 4 4"/><path d="M17 4v16M13 16l4 4 4-4"/></svg><span class="tl"><b>匯出／匯入</b><small aria-hidden="true">Export · Import</small></span></button>
+    <button class="tab" role="tab" id="tabbtn-info" aria-controls="tab-info" data-tab="info" data-no="07" aria-selected="false"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.5"/><path d="M4.5 5.5v13c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-13"/><path d="M4.5 12c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5"/></svg><span class="tl"><b>資料說明與檢核</b><small aria-hidden="true">Data & QA</small></span></button>
+<!--}ADMIN-->
+  </nav>
+</aside>
+<main class="main">
+<header>
+  <div class="masthead">
+    <div class="kicker">Taiwan Government Bonds · Outright Transactions<span id="appVer"></span></div>
+    <h1>公債買賣斷市場觀測 <span class="thin">／ 日成交與冷門券追蹤</span></h1>
+    <div class="metaline" id="metaLine"></div>
+    <div class="disclaimer">非官方資料，僅供參考，不構成任何投資建議。資料來源：櫃買中心買賣斷日檔、中央銀行開放資料；統計與分析由本工具自行計算，如有出入以官方公布為準。</div>
+  </div>
+  <div class="row">
+    <button class="btn glass" id="themeBtn" title="切換深淺色"><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg>明／暗</button>
+  </div>
+</header>
+
+<div class="filters">
+  <label><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M4 10h16M12 3l8 5H4z"/><path d="M6.5 10v8M10.5 10v8M13.5 10v8M17.5 10v8"/></svg><span>市場別</span>
+    <select id="fMarket">
+      <option value="-1">合併（處所＋等殖）</option>
+      <option value="0">營業處所</option>
+      <option value="1">等殖成交系統</option>
+    </select>
+  </label>
+  <div class="sep" aria-hidden="true"></div>
+  <label><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>參考曲線回溯期間</span>
+    <select id="fWin">
+      <option value="1">當日成交</option>
+      <option value="5">近 5 交易日</option>
+      <option value="10" selected>近 10 交易日</option>
+      <option value="20">近 20 交易日</option>
+    </select>
+  </label>
+  <div class="sep" aria-hidden="true"></div>
+  <label><svg class="ti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4 1.5v-8z"/></svg><span>冷門券清單篩選 · 期間成交日數 ≤</span>
+    <select id="fCold">
+      <option value="0" selected>不限</option>
+      <option value="3">3</option>
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="20">20</option>
+    </select>
+  </label>
+  <span class="sub" id="coldCount"></span>
+</div>
+
+<!-- ============ 每日總覽 ============ -->
+<section id="tab-daily" role="tabpanel" aria-labelledby="tabbtn-daily">
+  <div class="card">
+    <div class="cardhead">
+      <div class="row">
+        <button class="btn" id="dPrev">◀ 前一交易日</button>
+        <div class="calwrap">
+          <button class="btn datebtn" id="dPick" aria-haspopup="dialog" aria-expanded="false" title="開啟月曆選日期"></button>
+          <div class="cal" id="calPop" role="dialog" aria-label="選擇交易日" hidden></div>
+        </div>
+        <button class="btn" id="dNext">後一交易日 ▶</button>
+        <button class="btn" id="dLast">最新</button>
+      </div>
+      <div class="sub" id="dInfo"></div>
+    </div>
+  </div>
+  <div class="kpis" id="dKpis"></div>
+  <div class="card">
+    <div class="cardhead">
+      <h2>當日成交明細</h2><!--ADMIN{--><button class="btn sm" data-export="daily">匯出 CSV</button><!--}ADMIN-->
+    </div>
+    <div class="scrolly"><table id="dTable"></table></div>
+  </div>
+  <div class="card">
+    <div class="cardhead">
+      <h2>當日殖利率散布與參考曲線</h2>
+      <div class="row">
+        <label><span class="lab">橫軸</span>
+          <select id="fXScale" class="btn sm">
+            <option value="sqrt">非線性刻度（√年，短天期展開）</option>
+            <option value="lin">線性刻度（等距年限）</option>
+          </select>
+        </label>
+        <!--ADMIN{--><button class="btn sm" data-export="curve">匯出 CSV</button><!--}ADMIN-->
+      </div>
+    </div>
+    <div class="sub">圓點大小代表成交面額；灰點為回溯期間內其他券最近一次成交（構成參考曲線的節點）。當日成交的指標券會標示券號，其餘皆為冷門券；點選任一點可跳至個券檢視。</div>
+    <div class="legend" id="curveLegend"></div>
+    <div class="chart" id="curveChart"></div>
+    <div class="hint">參考曲線＝回溯期間內每檔券最近一次成交殖利率，依剩餘年限線性內插；計算個券利差時排除該券自身，避免自我對照。<br>
+      <b>橫軸刻度</b>：「非線性刻度」只改變刻度的<b>間距</b>（把 0.5／1／2／3／5／7／10／15／20 年依 √年 等距排列，同「對數刻度」的概念），<b>不改變任何數值、也沒有做任何平滑或配適</b>——殖利率、參考曲線、對曲線利差與下方表格在兩種刻度下完全相同。之所以提供這個選項，是因為台債成交高度集中在短天期（近 10 個交易日出現的券有 39% 剩餘年限不到 2 年、76% 不到 5 年）；線性刻度下 0–2 年只佔畫面寬度約 10%，這些券會擠成一團而無法辨識，非線性刻度可拉開到約 32%。<br>
+      要判讀期限結構的真實形狀（陡平、曲度）請用「線性刻度」；要辨識個別短天期券（尤其冷門券）用「非線性刻度」。<br>
+      圖上的點需要用滑鼠點選；不使用滑鼠時，下方「當日成交明細」是同一份資料，可用 Tab 聚焦、Enter 進入個券檢視。</div>
+  </div>
+</section>
+
+<!-- ============ 天期走勢 ============ -->
+<section id="tab-tenor" class="hidden" role="tabpanel" aria-labelledby="tabbtn-tenor">
+  <div class="card">
+    <div class="cardhead">
+      <h2>各天期成交殖利率</h2>
+      <div class="row">
+        <div class="seg" id="tenorPick" role="group" aria-label="選擇天期">
+          <button class="btn sm" data-tenor="2"><i></i>2Y</button>
+          <button class="btn sm" data-tenor="5"><i></i>5Y</button>
+          <button class="btn sm" data-tenor="10"><i></i>10Y</button>
+          <button class="btn sm" data-tenor="20"><i></i>20Y</button>
+          <button class="btn sm" data-tenor="30"><i></i>30Y</button>
+          <button class="btn sm" data-tenor="all">全部</button>
+        </div>
+        <div class="seg" id="tenorMode" role="group" aria-label="分組方式">
+          <button class="btn sm" data-mode="band" aria-pressed="true">剩餘年限區間</button>
+          <button class="btn sm" data-mode="bench">現行指標券</button>
+        </div>
+        <div class="seg" id="tenorRange" role="group" aria-label="顯示期間">
+          <button class="btn sm" data-range="3m">3M</button>
+          <button class="btn sm" data-range="6m">6M</button>
+          <button class="btn sm" data-range="ytd">YTD</button>
+          <button class="btn sm" data-range="1y">1Y</button>
+          <button class="btn sm" data-range="max" aria-pressed="true">全部</button>
+        </div>
+        <!--ADMIN{--><button class="btn sm" data-export="tenor">匯出 CSV</button><!--}ADMIN-->
+      </div>
+    </div>
+    <div class="sub" id="tenorRangeInfo" style="margin-top:8px;color:var(--ink2)"></div>
+    <div class="sub" id="tenorCoverage" style="margin-top:2px"></div>
+    <div class="sub">「剩餘年限區間」＝把當天落在該區間（2年 1.50–2.90、5年 4.50–5.90、10年 9.50–10.90、20年 19.50–20.90、30年 29.50–30.90）的成交以面額加權；同一檔券會隨到期日推移而換組，剛卸任的指標券也可能剛好落在區間外。「現行指標券」＝直接追當天各天期的指標券本身，是 on-the-run 序列，換券時會出現跳動。兩種都是無成交日不連線。</div>
+    <div class="legend" id="tenorLegend"></div>
+    <div class="chart" id="tenorChart"></div>
+  </div>
+  <div class="card">
+    <h2>每日成交面額（億元）</h2>
+    <div class="legend" id="volLegend"></div>
+    <div class="chart" id="volChart"></div>
+  </div>
+  <div class="card">
+    <h2>各天期期間統計<span class="sub" id="tenorStatRange" style="font-weight:400;margin-left:8px"></span></h2>
+    <div class="scrollx"><table id="tenorTable"></table></div>
+    <div class="hint">「有成交日數 / 期間交易日數」就是該天期的有成交日比率。</div>
+  </div>
+</section>
+
+<!-- ============ 個券檢視 ============ -->
+<section id="tab-bond" class="hidden" role="tabpanel" aria-labelledby="tabbtn-bond">
+  <div class="card">
+    <div class="row">
+      <label><span class="lab">券別</span> <select id="bPick" style="min-width:300px"></select></label>
+      <input type="search" id="bSearch" placeholder="搜尋券號或名稱…" style="min-width:170px">
+      <!--ADMIN{--><button class="btn sm" data-export="bond">匯出此券 CSV</button><!--}ADMIN-->
+    </div>
+    <div class="sub" id="bInfo" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <h2>成交殖利率 vs 同天期參考曲線</h2>
+    <div class="legend" id="bondLegend"></div>
+    <div class="chart" id="bondChart"></div>
+    <div class="hint">冷門券的成交是散點而非序列，所以疊上「同剩餘年限的參考曲線水準」；兩者的落差才是可比較的訊號。</div>
+  </div>
+  <div class="card">
+    <h2>成交面額（億元）</h2>
+    <div class="chart" id="bondVolChart"></div>
+  </div>
+  <div class="card">
+    <h2>對參考曲線利差（bp）</h2>
+    <div class="chart" id="spreadChart"></div>
+    <div class="legend"><span><i style="background:var(--s8)"></i>正利差：成交殖利率高於曲線（價格較便宜）</span><span><i style="background:var(--s1)"></i>負利差：低於曲線</span></div>
+  </div>
+  <div class="card">
+    <h2>成交紀錄</h2>
+    <div class="scrolly"><table id="bTable"></table></div>
+  </div>
+</section>
+
+<!-- ============ 冷門券雷達 ============ -->
+<section id="tab-cold" class="hidden" role="tabpanel" aria-labelledby="tabbtn-cold">
+  <div class="card">
+    <h2>現行指標券（各天期最近發行的一檔）</h2>
+    <div class="sub">發行日取自財政部「中央公債標售概況表」；表上還沒有的新券（或早於表格起始年度的老券）才用券號與剩餘年限推估，會標示「推估」。<b>標「推估」的券若被選為指標券，請以標售公告核對</b>——推估發行日是由最近成交日與剩餘年限倒推的，資料偏移時可能指錯券。除了這幾檔以外的公債，本工具都視為冷門券（非指標券）。</div>
+    <div class="scrollx"><table id="benchTable"></table></div>
+  </div>
+  <div class="two">
+    <div class="card">
+      <div class="cardhead">
+        <h2>冷門券（非指標券）清單</h2><!--ADMIN{--><button class="btn sm" data-export="cold">匯出 CSV</button><!--}ADMIN-->
+      </div>
+      <div class="sub" id="coldSub"></div>
+      <div class="scrolly" style="max-height:520px"><table id="coldTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>成交熱區圖（券 × 交易日）</h2>
+      <div class="row" style="margin-bottom:6px">
+        <label><span class="lab">排序</span>
+          <select id="hmSort" class="btn sm">
+            <option value="rem">剩餘年限</option>
+            <option value="days">成交日數</option>
+            <option value="code">券號</option>
+          </select>
+        </label>
+        <label style="font-size:13px;color:var(--ink2)"><input type="checkbox" id="hmColdOnly"> 只看冷門券</label>
+        <span class="legend" style="margin:0">
+          <span><i style="background:var(--seq1)"></i>小</span>
+          <span><i style="background:var(--seq3)"></i>中</span>
+          <span><i style="background:var(--seq5)"></i>大</span>
+          <span class="sub">方格＝當日成交面額</span>
+        </span>
+      </div>
+      <div class="hmwrap"><div class="chart" id="hmChart"></div></div>
+      <div class="hint">列標的剩餘年限是該券<b>最近一次成交當日</b>的值，久沒成交的券會偏舊（偏長）；當日成交明細與參考曲線用的則是當天的剩餘年限。整列幾乎空白的券，就是幾乎沒有次級市場成交的券；點選方格可跳到該券。方格需要滑鼠操作，左側「冷門券（非指標券）清單」是同一批券的鍵盤入口（Tab 聚焦、Enter 進入個券檢視）。</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>近期（最後 10 個交易日）成交的冷門券</h2>
+    <div class="scrollx"><table id="recentColdTable"></table></div>
+  </div>
+</section>
+
+<!-- ============ 週報 ============ -->
+<section id="tab-week" class="hidden" role="tabpanel" aria-labelledby="tabbtn-week">
+  <div class="sheet"><div class="sheet-in">
+  <div class="printhead printonly">
+    <div><div class="ph-kicker">Taiwan Government Bonds · Weekly Report</div>
+      <div class="ph-title" id="wPrintTitle"></div></div>
+    <div class="ph-meta" id="wPrintMeta"></div>
+  </div>
+  <div class="card">
+    <div class="cardhead noprint">
+      <div class="row">
+        <button class="btn noprint" id="wPrev">◀ 前一週</button>
+        <div class="wklabel" id="wLabel" aria-live="polite"></div>
+        <button class="btn noprint" id="wNext">後一週 ▶</button>
+        <button class="btn noprint" id="wLast">最近完整週</button>
+      </div>
+      <button class="btn sm noprint" id="wPrint" title="用瀏覽器列印（A4 直式 2 頁），可選「儲存為 PDF」">列印／存成 PDF</button>
+    </div>
+    <div class="sub noprint" id="wInfo" style="margin-top:6px"></div>
+    <div class="wsum" id="wSummary"></div>
+  </div>
+  <div class="kpis" id="wKpis" style="margin-bottom:16px"></div>
+  <div class="card">
+    <div class="cardhead">
+      <h2>指標券殖利率變動</h2><!--ADMIN{--><button class="btn sm" data-export="weekBench">匯出 CSV</button><!--}ADMIN-->
+    </div>
+    <div class="sub noprint">「較前一週」＝同一檔指標券本週最後一次成交，對比該券在本週之前的最後一次成交；本週沒有成交的天期不計算變動。</div>
+    <div class="pair">
+      <div>
+        <div class="legend" id="wCurveLegend"></div>
+        <div class="chart" id="wCurveChart"></div>
+      </div>
+      <div>
+        <div class="legend"><span><i style="background:var(--s8)"></i>殖利率上升</span><span><i style="background:var(--s1)"></i>殖利率下降</span><span class="sub">單位：bp</span></div>
+        <div class="chart" id="wBpChart"></div>
+      </div>
+    </div>
+    <div class="scrollx"><table id="wBenchTable"></table></div>
+    <div class="hint">空心圓點＝該指標券本週（或前一週）沒有成交，畫的是它更早的最後一次成交殖利率，滑鼠移上去可看成交日期；不代表本週的市場水準。<br>
+      左圖的前一週曲線用的是<b>前一週當時</b>的指標券；若本週發生換券，右圖與表格的變動仍以本週指標券自身計算，並在表格註明換券。</div>
+  </div>
+  <div class="card">
+    <h2>每日成交面額（億元）</h2>
+    <div class="legend"><span><i style="background:var(--s1)"></i>指標券</span><span><i style="background:var(--s2)"></i>非指標券（冷門券）</span><span><i style="background:var(--s4)"></i>發行前交易</span></div>
+    <div class="chart" id="wDayChart"></div>
+  </div>
+  </div></div>
+  <div class="sheet"><div class="sheet-in">
+  <div class="card" id="wBucketCard">
+    <h2>非指標券成交：剩餘年限分布（億元）</h2>
+    <div class="legend" id="wBucketLegend"></div>
+    <div class="chart" id="wBucketChart"></div>
+  </div>
+  <div class="card" id="wColdCard">
+    <div class="cardhead">
+      <h2>非指標券（冷門券）成交明細</h2><!--ADMIN{--><button class="btn sm" data-export="weekCold">匯出 CSV</button><!--}ADMIN-->
+    </div>
+    <div class="sub" id="wColdSub"></div>
+    <div class="scrollx"><table id="wColdTable"></table></div>
+    <div class="hint">「距上次成交」是本週第一次成交距離本週之前最後一次成交的交易日數；超過 20 個交易日（約一個月）或資料期間內首次成交的，標示「久違」——冷門券久未成交後突然出現買賣，常是值得留意的訊號。「較上次」是本週最後成交對比本週之前最後一次成交；間隔很久時，這個變動包含了整段期間的市場利率變化。</div>
+    <div class="wfoot printonly">註：1. 指標券為各天期最近發行且發行未滿 3 年之券，以該週最後交易日判定；「較前一週」＝同一檔指標券本週最後成交對比其本週之前最後一次成交，本週無成交者不計；圖中空心點為該週無成交時的最近一次成交。
+      2. 非指標券「久違」＝距上次成交逾 20 個交易日或資料期間內首次成交；「較上次」涵蓋兩次成交間的全部利率變化。
+      3. 對曲線利差以回溯期間內各券最近成交內插之參考曲線計算，僅供相對比較。 4. 資料來源：櫃買中心買賣斷日檔（營業處所、等殖成交系統）；殖利率為成交面額加權。 5. 本報告為非官方資料，僅供參考，不構成任何投資建議；如有出入以官方公布為準。</div>
+  </div>
+</div></div>
+</section>
+
+<!--ADMIN{-->
+<!-- ============ 匯出／匯入 ============ -->
+<section id="tab-io" class="hidden" role="tabpanel" aria-labelledby="tabbtn-io">
+  <div class="card">
+    <h2>資料更新</h2>
+    <div class="sub">本頁資料每個交易日下午 5 點起自動向櫃買中心抓取當日買賣斷日檔並更新，櫃買較晚發布時會在 17:30、18:00、19:00 再試；更新後重新整理本頁即可看到最新資料。</div>
+    <ul class="doc">
+      <li>抓的是櫃買買賣斷日檔 <code>BDdcs001</code>（營業處所）與 <code>BDdys01a</code>（等殖成交系統），只留中央政府公債（券號 A＋5 碼，可含 R 尾碼），並排除處所檔中的附條件交易表。</li>
+      <li>休市日、尚未發布的日子沒有日檔，會自動略過；同一天重抓會覆蓋原值，不會產生重複資料。</li>
+      <li>原始資料頁面：<a href="https://www.tpex.org.tw/zh-tw/bond/info/statistics-gb/day/ebts.html" target="_blank" rel="noreferrer">等殖成交系統</a>、<a href="https://www.tpex.org.tw/zh-tw/bond/info/statistics-gb/day/otc.html" target="_blank" rel="noreferrer">營業處所</a>。</li>
+      <li>若之前勾過「記住這份資料」，只要網頁內建的資料比較新，本頁會自動改用新的。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>匯入資料</h2>
+    <div class="sub">可直接把檔案拖曳到本頁任何位置，或按下方的按鈕選擇。匯入後可勾選記住，下次開啟同一個 HTML 就會沿用。</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="impBtn">選擇檔案（.csv / .xlsx / .json）</button>
+      <input type="file" id="impFile" accept=".csv,.xlsx,.json" class="hidden">
+      <label style="font-size:14px;color:var(--ink2)"><input type="checkbox" id="impRemember" checked> 記住這份資料（存在瀏覽器本機）</label>
+      <button class="btn" id="resetBtn">還原內建資料</button>
+    </div>
+    <div id="impMsg" class="hint"></div>
+    <ul class="doc" style="margin-top:12px">
+      <li><b>.csv</b>：本工具資料檔 <code>records.csv</code>，或本工具匯出的「原始明細（分市場）」CSV。兩者都是「交易日 × 券別 × 市場」一列一筆、殖利率已是百分比。</li>
+      <li><b>.xlsx</b>：GPT 產生的同格式彙整檔（需含「交易明細」工作表，欄位名稱不變），本頁會直接在瀏覽器內讀取，不必另外執行 Python。</li>
+      <li><b>.json</b>：本工具匯出的資料備份檔，可在不同電腦間搬移或存檔備份。</li>
+      <li>匯入只影響你這台電腦的瀏覽器，不會改動原始檔，也不會上傳到任何地方。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>匯出</h2>
+    <div class="sub">CSV 為 UTF-8 with BOM，Excel 可直接開啟；數值已還原為百分比（%）與億元。</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" data-export="daily">當日成交明細</button>
+      <button class="btn" data-export="curve">當日曲線節點</button>
+      <button class="btn" data-export="tenor">天期日序列</button>
+      <button class="btn" data-export="bond">目前個券紀錄</button>
+      <button class="btn" data-export="cold">冷門券清單</button>
+      <button class="btn" data-export="weekBench">週報：指標券變動</button>
+      <button class="btn" data-export="weekCold">週報：非指標券成交</button>
+      <button class="btn" data-export="all" title="分析用；此格式不能再匯入">全部券×日合併明細（含對曲線利差）</button>
+      <button class="btn" data-export="raw">原始明細（分市場）</button>
+      <button class="btn" data-export="json">資料備份檔 JSON（可再匯入）</button>
+    </div>
+    <div class="hint">CSV 會套用目前的市場別篩選與參考曲線回溯期間設定。<br>
+      可以再匯入的只有「原始明細（分市場）」與「資料備份檔 JSON」；「券×日合併明細」把兩個市場併成一列（市場欄會出現「處所＋等殖」），是分析用格式，不能回頭匯入。</div>
+  </div>
+</section>
+
+<!-- ============ 資料說明與檢核 ============ -->
+<section id="tab-info" class="hidden" role="tabpanel" aria-labelledby="tabbtn-info">
+  <div class="card">
+    <h2>資料來源與計算方式</h2>
+    <ul class="doc">
+      <li>資料來源：櫃買中心買賣斷日檔 <code>BDdcs001</code>（營業處所，取其中的 <code>BDdcs01a</code> 工作表）與 <code>BDdys01a</code>（等殖成交系統），已彙整為「交易日 × 市場 × 券別」。</li>
+      <li>官方日檔不揭露買賣雙方、成交時間或逐筆明細，日內只有最高／最低／加權平均價與殖利率。</li>
+      <li><b>成交筆數只有營業處所揭露</b>，等殖成交系統日檔未提供，故本工具的筆數一律標示為「處所筆數」，不是全市場筆數。</li>
+      <li>殖利率為成交面額加權；跨券、跨市場的加權平均會受券別組合影響，不等同單一天期殖利率變動。</li>
+      <li><b>冷門券的定義</b>：不是現行流通指標券的公債。指標券＝2／5／10／20／30 年期中，各天期最近發行、發行日已到、且發行未滿 3 年的那一檔；其餘（含卸任的舊指標券、老券）都算冷門券（非指標券）。指標券會隨新券發行換手，因此每一天的判定都是以當天為準。</li>
+      <li><b>年期與發行日以官方資料為準</b>：取自財政部「中央公債標售概況表」（本頁內建版本的表列更新日期見下方檢核表），券號對照規則為 A＋民國年 2 碼＋類別 1 碼（甲=1、乙=2）＋序號 2 碼，例如 115甲6＝A15106。增額發行（標售表上標 ※）不改首次發行日，另外記錄最近一次增額日期；發行前交易（券號尾碼 R）沿用本券的發行資料。</li>
+      <li>標售表上還沒有的券（更新日之後才發行）或早於表格起始年度的老券，才回退到<b>推估</b>：由券號民國年與當日剩餘年限推回到期日，取不超過推估區間的最大標準年期，發行日＝到期日−年期；這種值會標示「推估」。目前內建資料有 3 檔採推估（A15108、A90105、A93106），其餘 107 檔為官方值。實測推估與官方對照：110 檔中年期全數相符，發行日誤差中位數 2 天、最大 4 天。</li>
+      <li>券號帶 R 者為<b>發行前交易</b>（when-issued，櫃買日檔自 102/02/01 起的標示），在本工具中單獨分列，且不列為現行指標券。</li>
+      <li>匯入的 <code>.xlsx</code>／<code>.json</code> 一律當成不可信來源：驗證結構、索引與數值範圍後，<b>統計數字與檢核結果全部由資料本身重算</b>（不採用檔案裡宣稱的值），並強制標記為「瀏覽器匯入」。驗證不通過就整份退回。</li>
+      <li><b>週報</b>：週＝週一至週五，預設顯示最近一個完整週。指標券以該週最後一個交易日的指標券為準，「較前一週」拿同一檔券本週最後一次成交對比它本週之前的最後一次成交（換券時不拿兩檔不同的券相減）；本週沒成交的天期不計算變動，圖上以空心點標出更早的成交。非指標券「久違成交」＝距上次成交超過 20 個交易日，或資料期間內首次成交。</li>
+      <li>參考曲線為回溯期間內各券最新成交點的線性內插，僅供相對比較，非官方公債殖利率曲線；剩餘年限落在節點範圍外時不外插，利差留白。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>版本紀錄</h2>
+    <div class="sub" id="verNow"></div>
+    <div class="scrollx"><table id="verTable"></table></div>
+  </div>
+  <div class="card">
+    <h2>來源檔檢核</h2>
+    <div class="scrollx"><table id="checkTable"></table></div>
+  </div>
+</section>
+<!--}ADMIN-->
+
+</main>
+</div>
+<div id="tip"></div>
+<!--ADMIN{--><div id="drop">放開以匯入資料檔（.csv / .xlsx / .json）</div><!--}ADMIN-->
+
+<script>
+"use strict";
+/* ── 版本控管 ───────────────────────────────────────────
+   每次改程式：調 APP_VERSION（功能、計算方式或資料格式變動進第二位，僅文字或外觀調整加第三位）、
+   改 APP_DATE、在 CHANGELOG 最前面加一筆、<title> 同步，並另存 versions/template_<版號>.html。 */
+const APP_VERSION = 'V1.3.2';
+const APP_DATE = '2026-11-05';
+const CHANGELOG = [
+  ['V1.3.2','2026-11-05','修正：每日總覽切到較早日期時，冷門券雷達的現行指標券與個券檢視的發行日會被誤標「尚未發行」；小月曆的「今日」與匯入資料的產生時間改用本地時間（原為 UTC）；左側導覽列可用上下鍵切換；損毀或截斷的 xlsx 改顯示明確錯誤。資安強化：HTML 轉義加上引號、xlsx 實體解碼支援十六進位並限制範圍、CSV 匯出擋前導空白、CSP 的 font-src 改為 none。'],
+  ['V1.3.1','2026-11-04','畫面字級放大約一成（含圖表文字；週報列印版不變）；一般版各卡片上的「匯出 CSV」按鈕一併隱藏。'],
+  ['V1.3','2026-11-04','分成一般版與管理者版：一般版（公開網址）隱藏「匯出／匯入」與「資料說明與檢核」，也不讀取瀏覽器記住的匯入資料；管理者版放在另一個網址、需輸入密碼才能開啟，功能完整。'],
+  ['V1.2.3', '2026-11-04', '發布為公開網頁（每交易日 17:00 自動更新）：拿掉只適用本機的終端機操作說明，改為網頁版的資料更新說明；報頭與週報列印附註加上非官方資料聲明。'],
+  ['V1.2.2', '2026-11-04', '介面重新設計（使用者提供）：左側導覽列、量化交易終端風格配色、等寬數字字型；週報列印頁右上角改用介面字型，避免標題折行。'],
+  ['V1.2.2', '2026-10-29', '天期走勢：「各天期成交殖利率」與「每日成交面額」兩張圖改用同一組左右邊界，橫軸日期上下對齊；個券檢視的三張時間圖一併對齊。'],
+  ['V1.2.1', '2026-10-14', '週報列印版字級再放大（摘要 11.5pt、表格 10.3pt、圖上文字約 9pt）；非指標券年限分布圖移到第 2 頁，每日成交面額改為整頁寬；列印版表格欄名與日期改用較短寫法。'],
+  ['V1.2', '2026-10-14', '週報列印版：字級放大（表格 8.8pt、圖上文字約 8pt）；改為固定兩張 A4 版面，不受瀏覽器最小字級設定影響；加入版本控管（版號顯示於報頭、週報列印頁與「資料說明與檢核」分頁）。'],
+  ['V1.1', '2026-09-14', '新增「週報」分頁：指標券殖利率週變動、非指標券成交彙整、A4 列印版與 weekly_pdf.py。'],
+  ['V1.0', '2026-08-22', '初版：每日總覽、天期走勢、個券檢視、冷門券雷達、匯出／匯入；官方發行日、指標券逐日判定、參考曲線與對曲線利差。'],
+];
+const BUILTIN = /*__DATA__*/null;
+/* 版別：build 時由 bonddata.render 代換。public＝一般版（公開網址），沒有匯出匯入、資料說明與檢核，
+   也不讀 localStorage 裡的匯入資料（管理者版與一般版同網域，共用 localStorage）。 */
+const EDITION = /*__EDITION__*/'full';
+const ADMIN = EDITION!=='public';
+let DATA, M, DATES, BONDS, RECS, MK, NB, ND;
+
+const TENORS = [
+  {t:2,  k:'2年期', lo:1.5, hi:2.9, c:'--s1'},
+  {t:5,  k:'5年期', lo:4.5, hi:5.9, c:'--s2'},
+  {t:10, k:'10年期',lo:9.5, hi:10.9,c:'--s3'},
+  {t:20, k:'20年期',lo:19.5,hi:20.9,c:'--s4'},
+  {t:30, k:'30年期',lo:29.5,hi:30.9,c:'--s5'},
+];
+const LS_KEY = 'bondmkt.snapshot.v1';
+/* localStorage 在隱私模式或某些來源會直接丟例外，所有存取都走這裡，失敗就當作沒有 */
+const LS = {
+  get(){ try{ return localStorage.getItem(LS_KEY); }catch(e){ return null; } },
+  set(v){ try{ localStorage.setItem(LS_KEY, v); return true; }catch(e){ return false; } },
+  del(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} },
+};
+const cssv = n => getComputedStyle(document.body).getPropertyValue(n).trim();   // 讀 body：章節色 --accent 定義在 body[data-section]
+const fmt = (v,n=2) => v==null||Number.isNaN(v) ? '—' : v.toLocaleString('zh-TW',{minimumFractionDigits:n,maximumFractionDigits:n});
+const pct = v => v==null ? '—' : v.toFixed(3)+'%';
+const bp  = v => v==null ? '—' : (v>0?'+':'')+v.toFixed(1);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));   // 也用在屬性值裡，引號一併轉義
+
+const S = {market:-1, win:10, listMax:0, range:'max', tenorPick:[2,5,10,20,30], tenorMode:'band', date:0, bond:0, tab:'daily', hmSort:'rem', hmColdOnly:false, xscale:'sqrt',
+  sortDaily:{k:'face',dir:-1}, sortBench:{k:'t',dir:1}, sortCold:{k:'lastDi',dir:-1}, sortRecent:{k:'lastDi',dir:-1}, sortBond:{k:'di',dir:-1},
+  week:-1, sortWB:{k:'t',dir:1}, sortWC:{k:'face',dir:-1}};
+
+/* ---------------- 依市場別合併成 券×日 ---------------- */
+let byDate=[], byBond=[], bondDays=[], bondFace=[], bondAmt=[];
+const faceOf = bi => +(bondFace[bi]||0).toFixed(3);   // 依目前市場別篩選後的成交面額
+const curveCache = new Map();
+function rebuild(){
+  const map = new Map();
+  for(const r of RECS){
+    const [di,bi,mk,face,amt,y,ylo,yhi,p,rem,dur,otc] = r;
+    if(S.market>=0 && mk!==S.market) continue;
+    const key = di*100000+bi;
+    let o = map.get(key);
+    if(!o){ o={di,bi,face:0,amt:0,ysum:0,ylo,yhi,psum:0,rem,dur,otc:0,mask:0}; map.set(key,o); }
+    o.face+=face; o.amt+=amt; o.ysum+=y*face; o.psum+=p*face; o.otc+=otc; o.mask|=(1<<mk);
+    o.ylo=Math.min(o.ylo,ylo); o.yhi=Math.max(o.yhi,yhi); o.rem=rem; o.dur=dur;
+  }
+  byDate = Array.from({length:ND},()=>[]);
+  byBond = Array.from({length:NB},()=>[]);
+  for(const o of map.values()){
+    o.y = o.ysum/o.face; o.p = o.psum/o.face;
+    byDate[o.di].push(o); byBond[o.bi].push(o);
+  }
+  for(const a of byDate) a.sort((x,y)=>x.rem-y.rem);
+  for(const a of byBond) a.sort((x,y)=>x.di-y.di);
+  // 前一筆成交直接記在紀錄上（原本每次都重掃一遍），並依目前市場別篩選重算各券總量
+  bondFace = new Array(NB).fill(0);
+  bondAmt  = new Array(NB).fill(0);
+  for(const a of byBond) a.forEach((o,i)=>{ o.prev = i ? a[i-1] : null;
+    bondFace[o.bi]+=o.face; bondAmt[o.bi]+=o.amt; });
+  bondDays = byBond.map(a=>a.length);
+  curveCache.clear(); spreadCache.clear(); levelCache.clear();
+  buildBenchmarks();
+}
+/* 指標券＝該天期最近發行、且發行日已到的那一檔（不含發行前交易的 R 券）；
+   其餘皆為非指標券，也就是本工具講的冷門券。 */
+const BENCH_TENORS = [2,5,10,20,30];      // 台債實際持續發行的天期
+const BENCH_MAX_AGE = 3;                  // 指標券最多只認發行 3 年內的券
+let tenorGroups = new Map();
+const bmCache = new Map();
+function buildBenchmarks(){
+  tenorGroups = new Map(); bmCache.clear();
+  BONDS.forEach((b,bi)=>{
+    // 已發行（非發行前交易）、天期屬標準天期的券才可能是指標券
+    if(b.t==null || !b.iss || b.wi || !BENCH_TENORS.includes(b.t)) return;
+    if(!tenorGroups.has(b.t)) tenorGroups.set(b.t,[]);
+    tenorGroups.get(b.t).push({bi, iss:b.iss});
+  });
+  for(const a of tenorGroups.values()) a.sort((x,y)=> x.iss<y.iss?-1:x.iss>y.iss?1:0);
+}
+function benchMap(di){                       // Map(年期 → 券索引)
+  if(bmCache.has(di)) return bmCache.get(di);
+  const d = DATES[di], out = new Map();
+  const cutoff = (+d.slice(0,4) - BENCH_MAX_AGE) + d.slice(4);   // 三年前的同一天
+  for(const [t,arr] of tenorGroups){
+    let pick=null;
+    for(const o of arr){ if(o.iss<=d) pick=o; else break; }
+    if(pick && pick.iss>=cutoff) out.set(t,pick.bi);             // 太老的就不算現行指標券
+  }
+  bmCache.set(di,out);
+  return out;
+}
+function benchSet(di){
+  const m=benchMap(di);
+  if(!m._set) m._set=new Set(m.values());
+  return m._set;
+}
+const isBench = (bi,di=ND-1) => benchSet(di).has(bi);
+/* 發行前＝券號帶 R，或當天還沒到發行日。後者才是實情：115甲8 在 2026-09-04 發行前
+   就以 5.00 年的名目年期在等殖系統成交，券號並沒有 R 尾碼。 */
+const isWI = (bi,di=ND-1) => {
+  const b=BONDS[bi];
+  if(b.wi) return true;
+  return !!(b.iss && DATES[di] && b.iss > DATES[di]);
+};
+const isIssued = (bi,di=ND-1) => !isWI(bi,di);
+const isCold  = (bi,di=ND-1) => bondDays[bi]>0 && !isWI(bi,di) && !isBench(bi,di);
+const kindChip = (bi,di=ND-1) => isWI(bi,di) ? ' <span class="chip wi">發行前</span>'
+  : isBench(bi,di) ? ' <span class="chip bench">指標</span>'
+  : ' <span class="chip cold">冷門</span>';
+const kindName = (bi,di=ND-1) => isWI(bi,di) ? '發行前' : isBench(bi,di) ? '指標券' : '非指標券';
+const kindRank = (bi,di=ND-1) => isBench(bi,di) ? 0 : isWI(bi,di) ? 1 : 2;
+const tenorLabel = bi => BONDS[bi].t!=null ? BONDS[bi].t+'年期' : '—';
+/* 發行日：已發行就直接顯示日期，不再標「推估」（來源仍可在「資料說明與檢核」與 CSV 查到）；
+   只有還沒發行的券才標，因為那時的日期本來就是預計值。 */
+const issCell = (bi,di=ND-1) => {
+  const b=BONDS[bi];
+  if(!b.iss) return '—';
+  const est = b.src!=='off';
+  if(isWI(bi,di))
+    return `<span title="${est?'推估的預計發行日':'官方公告發行日'}">${esc(b.iss)}</span>`
+      + ` <span class="chip wi">${est?'預計發行':'尚未發行'}</span>`;
+  return `<span title="${est?'發行日為推估值（官方標售表未收錄此期），該券已發行':'官方標售表發行日'}">`
+    + `${esc(b.iss)}</span>`;
+};
+
+/* ---------------- 參考曲線 ---------------- */
+function windowNodes(di){
+  const key = di+'|'+S.win;
+  if(curveCache.has(key)) return curveCache.get(key);
+  const seen = new Map();
+  // 發行前交易（R 券，或當天還沒到發行日者）是尚未發行的標的，不拿來當已發行券的曲線節點
+  for(let d=di; d>Math.max(-1,di-S.win); d--)
+    for(const o of byDate[d]) if(!isWI(o.bi,d) && !seen.has(o.bi)) seen.set(o.bi,o);
+  const nodes = Array.from(seen.values()).sort((a,b)=>a.rem-b.rem);
+  curveCache.set(key,nodes);
+  return nodes;
+}
+function interp(nodes){
+  const pts=[];
+  for(const n of nodes){
+    const last = pts[pts.length-1];
+    // 相近年限併成一個節點：殖利率與「位置」都用成交面額加權，避免三檔以上時位置被前面那筆拉走
+    if(last && Math.abs(n.rem-last.cx/last.w)<0.1){ last.w+=n.face; last.s+=n.y*n.face; last.cx+=n.rem*n.face; }
+    else pts.push({w:n.face, s:n.y*n.face, cx:n.rem*n.face});
+  }
+  const P = pts.map(p=>({x:p.cx/p.w, y:p.s/p.w}));
+  const f = x => {
+    if(P.length<2 || x<P[0].x || x>P[P.length-1].x) return null;
+    for(let i=1;i<P.length;i++) if(x<=P[i].x){
+      const a=P[i-1], b=P[i];
+      return b.x===a.x ? b.y : a.y+(b.y-a.y)*(x-a.x)/(b.x-a.x);
+    }
+    return null;
+  };
+  f.points = P;
+  return f;
+}
+const curveOf = di => interp(windowNodes(di));
+const curveLevel = (di,rem) => curveOf(di)(rem);
+const spreadCache = new Map();
+/* 某券在某日的參考曲線水準：一律排除該券自身的節點，並用「該日的剩餘年限」。
+   個券未成交的日子沒有官方剩餘年限，以最近一次成交往回推算（每過一天少 1/365.25 年）。*/
+function remOf(bi,di){
+  const a = byBond[bi];
+  if(!a || !a.length) return BONDS[bi].rem;
+  let ref = a[0];
+  for(const o of a){ if(o.di===di) return o.rem; if(o.di<di) ref=o; }
+  const gap = (Date.parse(DATES[di]) - Date.parse(DATES[ref.di])) / 86400000;
+  return Math.max(0, ref.rem - gap/365.25);
+}
+const levelCache = new Map();
+/* 該券若不是當日曲線的節點，排不排除自己算出來都一樣，直接用全市場曲線省一次內插 */
+function curveExcl(di, bi){
+  const nodes = windowNodes(di);
+  if(!nodes.some(n=>n.bi===bi)) return curveOf(di);
+  return interp(nodes.filter(n=>n.bi!==bi));
+}
+function curveLevelFor(bi,di){
+  const k = S.win+'|'+di+'|'+bi;
+  if(levelCache.has(k)) return levelCache.get(k);
+  const v = curveExcl(di,bi)(remOf(bi,di));
+  levelCache.set(k,v);
+  return v;
+}
+function spreadOf(o){
+  const k = S.win+'|'+o.di+'|'+o.bi;      // 回溯期間必須在 key 裡，否則改期間後利差不會重算
+  if(spreadCache.has(k)) return spreadCache.get(k);
+  const c = curveExcl(o.di,o.bi)(o.rem);
+  const v = c==null ? null : (o.y-c)*100;
+  spreadCache.set(k,v);
+  return v;
+}
+
+/* 兩種分組：
+   band  －依剩餘年限落在 T±窗內（原本的做法，涵蓋率有限但不依賴指標券判定）
+   bench －直接追當天的現行指標券本身（on-the-run 序列，會隨新券發行換手）*/
+function tenorSeries(){
+  if(S.tenorMode==='bench'){
+    return BENCH_TENORS.map((t,i)=>{
+      const pts=[]; const used=new Set();
+      for(let d=0; d<ND; d++){
+        const bi = benchMap(d).get(t);
+        if(bi==null) continue;
+        const rec = byDate[d].find(o=>o.bi===bi);
+        if(!rec) continue;
+        used.add(BONDS[bi].c);
+        pts.push({x:d, y:rec.y, v:rec.face, code:BONDS[bi].c});
+      }
+      return {t, name:t+'年期指標', short:t+'Y 指標', color:TENORS[i].c, pts, used:[...used]};
+    });
+  }
+  return TENORS.map(t=>{
+    const pts=[];
+    for(let d=0; d<ND; d++){
+      let w=0,s=0;
+      for(const o of byDate[d]) if(o.rem>=t.lo && o.rem<=t.hi){ w+=o.face; s+=o.y*o.face; }
+      if(w>0) pts.push({x:d,y:s/w,v:w});
+    }
+    return {t:t.t, name:t.k, short:t.k, color:t.c, pts, band:t.lo+'–'+t.hi};
+  });
+}
+
+/* ---------------- SVG 小工具 ---------------- */
+const NS='http://www.w3.org/2000/svg';
+const SCREEN_FS = 1.1;                          // 螢幕圖表字級倍率（列印不套用）
+const PRINTING = () => document.body.classList.contains('printing');
+const PH = (screen, print) => PRINTING() ? print : screen;   // 圖高：螢幕／列印
+function E(tag,attrs={},txt){ const e=document.createElementNS(NS,tag);
+  // 列印時圖上的字也可能被瀏覽器的最小字級撐大（Safari 會），所以把字級放大 3 倍再用 transform 縮回，位置不變
+  if(tag==='text' && attrs['font-size'] && PRINTING()){
+    attrs=Object.assign({},attrs,{x:(+attrs.x||0)*PRINT_K, y:(+attrs.y||0)*PRINT_K,
+      'font-size':attrs['font-size']*PRINT_K, transform:`scale(${1/PRINT_K})`});
+  } else if(tag==='text' && attrs['font-size'] && attrs['font-size']<30){
+    // 螢幕上的圖表字放大 SCREEN_FS 倍（V1.3.1）；列印版維持原字級。≥30 的是 textZoom 量測用字，不動
+    attrs=Object.assign({},attrs,{'font-size':attrs['font-size']*SCREEN_FS});
+  }
+  for(const k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; return e; }
+const tip = document.getElementById('tip');
+function showTip(evt,html){ tip.innerHTML=html; tip.style.opacity=1;
+  const r=tip.getBoundingClientRect();
+  let x=evt.clientX+14, y=evt.clientY-10;
+  if(x+r.width>innerWidth-8) x=evt.clientX-r.width-14;
+  if(y+r.height>innerHeight-8) y=innerHeight-r.height-8;
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px';
+}
+const hideTip = ()=>{ tip.style.opacity=0; };
+function niceTicks(lo,hi,n=5){
+  if(lo===hi){lo-=0.5;hi+=0.5;}
+  const span=hi-lo, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0)));
+  const step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=step0)||10*mag;
+  const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(+v.toFixed(10));
+  return out;
+}
+function dateTicks(sx, x0=0){
+  const out=[]; let cur='', curYear='', lastX=-1e9;
+  DATES.forEach((d,i)=>{
+    if(i<x0) return;
+    const m=d.slice(0,7);
+    if(m===cur) return;
+    cur=m;
+    const x=sx(i);
+    if(x-lastX<=34) return;
+    const y=d.slice(0,4);
+    const newYear = y!==curYear;                    // 跨年度就標年份，免得兩個「01月」分不清
+    curYear=y;
+    out.push({i, x, label:newYear ? y+'年' : d.slice(5,7)+'月', year:newYear});
+    lastX=x;
+  });
+  return out;
+}
+function frame(host,h,pad){
+  host.innerHTML='';
+  const k = PRINTING() ? 0.9 : 1;               // 列印時縮小座標系，圖上文字相對放大（約 9pt）
+  const w = Math.max(320, (host.clientWidth||900)*k);
+  const svg = E('svg',{viewBox:`0 0 ${w} ${h}`,height:h/k,role:'img'});
+  const label = host.closest('.card') && host.closest('.card').querySelector('h2');
+  svg.setAttribute('aria-label', (label?label.textContent.trim():'圖表')+'（同一張卡片下方或右側的表格提供相同數值）');
+  host.appendChild(svg);
+  const P = Object.assign({l:52,r:16,t:10,b:26},pad||{});
+  return {svg,w,h,P,iw:w-P.l-P.r,ih:h-P.t-P.b};
+}
+function grid(f,ys,yfmt,xticks,scaleY){
+  for(const t of ys){
+    const y=scaleY(t);
+    f.svg.appendChild(E('line',{x1:f.P.l,x2:f.w-f.P.r,y1:y,y2:y,stroke:cssv('--grid'),'stroke-width':1}));
+    f.svg.appendChild(E('text',{x:f.P.l-8,y:y+4,'text-anchor':'end',fill:cssv('--muted'),'font-size':11},yfmt(t)));
+  }
+  for(const t of xticks){
+    if(t.year) f.svg.appendChild(E('line',{x1:t.x,x2:t.x,y1:f.P.t,y2:f.h-f.P.b,
+      stroke:cssv('--grid'),'stroke-width':1}));
+    f.svg.appendChild(E('text',{x:t.x,y:f.h-8,'text-anchor':'middle',
+      fill:cssv(t.year?'--ink2':'--muted'),'font-size':11,'font-weight':t.year?'600':'400'},t.label));
+  }
+  f.svg.appendChild(E('line',{x1:f.P.l,x2:f.w-f.P.r,y1:f.h-f.P.b,y2:f.h-f.P.b,stroke:cssv('--axis'),'stroke-width':1}));
+}
+/* 依 y 座標排開重疊的標籤 */
+function placeLabels(items,minGap){
+  items.sort((a,b)=>a.y-b.y);
+  for(let i=1;i<items.length;i++)
+    if(items[i].y-items[i-1].y < minGap) items[i].y = items[i-1].y+minGap;
+  return items;
+}
+
+/* ---------------- 圖：時間序列 ---------------- */
+const X_PAD = {l:52, r:78};            // 時間軸圖表共用的左右邊界：上下疊放的圖才會日期對齊
+function timeChart(host,series,opts={}){
+  const h=opts.h||280, f=frame(host,h,Object.assign({},X_PAD,opts.pad));
+  const all = series.flatMap(s=>s.pts.map(p=>p.y));
+  if(!all.length){ host.innerHTML='<div class="hint">此區間無資料</div>'; return; }
+  let lo=Math.min(...all), hi=Math.max(...all);
+  const padv=(hi-lo||0.2)*0.12; lo-=padv; hi+=padv;
+  const x0 = opts.x0||0, span = Math.max(1, ND-1-x0);
+  const sx = i => f.P.l + (i-x0)/span*f.iw;
+  const sy = v => f.P.t + (1-(v-lo)/(hi-lo))*f.ih;
+  grid(f,niceTicks(lo,hi,5),opts.yfmt||(v=>v.toFixed(2)),dateTicks(sx,x0),sy);
+  const hits=[], labels=[];
+  series.forEach(s=>{
+    const col = cssv(s.color)||s.color;
+    if(s.line!==false){
+      let seg=[];
+      const flush=()=>{ if(seg.length>1) f.svg.appendChild(E('path',{d:seg.map((p,i)=>(i?'L':'M')+sx(p.x)+' '+sy(p.y)).join(' '),
+        fill:'none',stroke:col,'stroke-width':2,'stroke-linejoin':'round','stroke-dasharray':s.dash||''})); seg=[]; };
+      s.pts.forEach((p,i)=>{ if(i && p.x-s.pts[i-1].x > (s.maxGap||3)) flush(); seg.push(p); });
+      flush();
+    }
+    if(s.markers!==false) s.pts.forEach(p=>{
+      f.svg.appendChild(E('circle',{cx:sx(p.x),cy:sy(p.y),r:s.r||3.2,fill:col,stroke:cssv('--surface'),'stroke-width':2}));
+      hits.push({x:sx(p.x),y:sy(p.y),p,s});
+    });
+    const last=s.pts[s.pts.length-1];
+    if(last && s.label!==false) labels.push({x:sx(last.x)+8,y:sy(last.y)+4,t:s.short||s.name,col});
+  });
+  for(const L of placeLabels(labels,13))
+    f.svg.appendChild(E('text',{x:L.x,y:L.y,fill:cssv('--ink2'),'font-size':11},L.t));
+  attachHover(f,hits,opts.tip||(h=>`<b>${DATES[h.p.x]}</b><br>${h.s.name}：${h.p.y.toFixed(3)}`));
+}
+function attachHover(f,hits,tipfn,onclick){
+  if(!hits.length) return;
+  const cross = E('line',{y1:f.P.t,y2:f.h-f.P.b,stroke:cssv('--axis'),'stroke-width':1,opacity:0});
+  const halo = E('circle',{r:7,fill:'none',stroke:cssv('--ink'),'stroke-width':1.5,opacity:0});
+  f.svg.appendChild(cross); f.svg.appendChild(halo);
+  const rect = E('rect',{x:0,y:0,width:f.w,height:f.h,fill:'transparent'});
+  f.svg.appendChild(rect);
+  const near = ev => {
+    const b=f.svg.getBoundingClientRect(), k=f.w/b.width;
+    const mx=(ev.clientX-b.left)*k, my=(ev.clientY-b.top)*k;
+    let best=null,bd=1e9;
+    for(const hh of hits){ const d=(hh.x-mx)**2+((hh.y-my)*0.6)**2; if(d<bd){bd=d;best=hh;} }
+    return bd<90*90 ? best : null;
+  };
+  rect.addEventListener('mousemove',ev=>{
+    const best=near(ev);
+    if(!best){ hideTip(); cross.setAttribute('opacity',0); halo.setAttribute('opacity',0); return; }
+    cross.setAttribute('x1',best.x); cross.setAttribute('x2',best.x); cross.setAttribute('opacity',.6);
+    halo.setAttribute('cx',best.x); halo.setAttribute('cy',best.y); halo.setAttribute('opacity',.9);
+    showTip(ev,tipfn(best));
+  });
+  rect.addEventListener('mouseleave',()=>{ hideTip(); cross.setAttribute('opacity',0); halo.setAttribute('opacity',0); });
+  if(onclick) rect.addEventListener('click',ev=>{ const b=near(ev); if(b) onclick(b); });
+}
+
+/* ---------------- 圖：長條 ---------------- */
+function barChart(host,bars,opts={}){
+  const h=opts.h||180, f=frame(host,h,opts.pad);
+  const tot = bars.map(b=>b.v.reduce((a,c)=>a+c,0));
+  const hi = Math.max(...tot,1), lo = 0;
+  const x0 = opts.x0||0, span = Math.max(1, ND-1-x0);
+  const sx = i => f.P.l + (i-x0)/span*f.iw;
+  const sy = v => f.P.t + (1-(v-lo)/((hi-lo)||1))*f.ih;
+  grid(f,niceTicks(lo,hi,4),opts.yfmt||(v=>fmt(v,0)),dateTicks(sx,x0),sy);
+  const bw = Math.max(2, Math.min(12, f.iw/(span+1)-1.5));
+  const hits=[];
+  bars.forEach(b=>{
+    let base=0;
+    b.v.forEach((v,k)=>{
+      if(!v) return;
+      const y0=sy(base+v), y1=sy(base);
+      f.svg.appendChild(E('rect',{x:sx(b.x)-bw/2,y:Math.min(y0,y1),width:bw,
+        height:Math.max(1,Math.abs(y1-y0)-(k?2:0)),rx:Math.min(2,bw/2),fill:cssv(opts.colors[k])}));
+      base+=v;
+    });
+    hits.push({x:sx(b.x),y:sy(base),p:{x:b.x,y:base,v:b.v},s:{name:''}});
+  });
+  // 月平均：每個月一段水平線，畫在同一個 Y 軸上（與長條同單位，不另開座標軸）
+  if(opts.avgSegs && opts.avgSegs.length){
+    const col = cssv(opts.avgColor||'--s3');
+    let d='';
+    opts.avgSegs.forEach((g,i)=>{
+      const xa=sx(g.i0)-bw/2, xb=sx(g.i1)+bw/2, y=sy(g.avg);
+      d += (i? ` L${xa} ${y}` : `M${xa} ${y}`) + ` L${xb} ${y}`;   // 月與月之間直接接上，形成階梯
+    });
+    f.svg.appendChild(E('path',{d,fill:'none',stroke:col,'stroke-width':2,
+      'stroke-linejoin':'round','stroke-linecap':'round'}));
+    const last = opts.avgSegs[opts.avgSegs.length-1];
+    f.svg.appendChild(E('text',{x:Math.min(sx(last.i1)+6, f.w-f.P.r+14), y:sy(last.avg)+4,
+      fill:cssv('--ink2'),'font-size':11},'月平均'));
+  }
+  attachHover(f,hits,opts.tip||(hh=>`<b>${DATES[hh.p.x]}</b><br>${fmt(hh.p.y,1)} 億`));
+}
+
+/* ---------------- 圖：當日曲線散布 ---------------- */
+function curveChart(host){
+  const di=S.date, h=340, f=frame(host,h,{l:54,r:22,t:16,b:30});
+  const nodes = windowNodes(di), today = byDate[di];
+  if(!today.length){ host.innerHTML='<div class="hint">當日無成交</div>'; return; }
+  const pool = nodes.concat(today);
+  const x1 = Math.max(...pool.map(o=>o.rem))*1.04;
+  const ys = pool.map(o=>o.y);
+  let ylo=Math.min(...ys), yhi=Math.max(...ys); const p=(yhi-ylo||.2)*.14; ylo-=p; yhi+=p;
+  const tx = v => S.xscale==='sqrt' ? Math.sqrt(Math.max(0,v)) : v;
+  const sx = v => f.P.l + tx(v)/tx(x1)*f.iw;
+  const sy = v => f.P.t + (1-(v-ylo)/(yhi-ylo))*f.ih;
+  for(const t of niceTicks(ylo,yhi,5)){
+    const y=sy(t);
+    f.svg.appendChild(E('line',{x1:f.P.l,x2:f.w-f.P.r,y1:y,y2:y,stroke:cssv('--grid')}));
+    f.svg.appendChild(E('text',{x:f.P.l-8,y:y+4,'text-anchor':'end',fill:cssv('--muted'),'font-size':11},t.toFixed(2)+'%'));
+  }
+  const xt = S.xscale==='sqrt' ? [0,0.5,1,2,3,5,7,10,15,20,25,30] : niceTicks(0,x1,6);
+  for(const t of xt){ if(t>x1) continue;
+    f.svg.appendChild(E('text',{x:sx(t),y:f.h-10,'text-anchor':'middle',fill:cssv('--muted'),'font-size':11},t+'y')); }
+  f.svg.appendChild(E('line',{x1:f.P.l,x2:f.w-f.P.r,y1:f.h-f.P.b,y2:f.h-f.P.b,stroke:cssv('--axis')}));
+  const cf = curveOf(di);
+  if(cf.points.length>1)
+    f.svg.appendChild(E('path',{d:cf.points.map((q,i)=>(i?'L':'M')+sx(q.x)+' '+sy(q.y)).join(' '),
+      fill:'none',stroke:cssv('--muted'),'stroke-width':2,opacity:.7}));
+  const hits=[];
+  const maxF = Math.max(...today.map(o=>o.face),1);
+  const rad = fv => 4+8*Math.sqrt(fv/maxF);
+  for(const n of nodes){ if(n.di===di) continue;
+    f.svg.appendChild(E('circle',{cx:sx(n.rem),cy:sy(n.y),r:3,fill:cssv('--muted'),opacity:.5}));
+    hits.push({x:sx(n.rem),y:sy(n.y),o:n,old:true});
+  }
+  const labels=[];
+  for(const o of today){
+    const col = S.market>=0 ? '--s1' : (o.mask===1?'--s1':o.mask===2?'--s2':'--s3');
+    f.svg.appendChild(E('circle',{cx:sx(o.rem),cy:sy(o.y),r:rad(o.face),fill:cssv(col),
+      stroke:cssv('--surface'),'stroke-width':2,opacity:.92}));
+    if(isBench(o.bi,di)||isWI(o.bi,di)){
+      const txt = BONDS[o.bi].c+(isWI(o.bi,di)?'（發行前）':' '+tenorLabel(o.bi)+'指標');
+      const right = sx(o.rem)+rad(o.face)+5, flip = right+txt.length*7 > f.w-f.P.r;
+      labels.push({x: flip ? sx(o.rem)-rad(o.face)-5 : right, y:sy(o.y)+3.5, t:txt, anchor: flip?'end':'start'});
+    }
+    hits.push({x:sx(o.rem),y:sy(o.y),o});
+  }
+  for(const L of placeLabels(labels,12))
+    f.svg.appendChild(E('text',{x:L.x,y:L.y,'text-anchor':L.anchor||'start',
+      fill:cssv('--ink2'),'font-size':10,'font-weight':'600'},L.t));
+  const rect=E('rect',{x:0,y:0,width:f.w,height:f.h,fill:'transparent'}); f.svg.appendChild(rect);
+  const near = ev => {
+    const b=f.svg.getBoundingClientRect(), k=f.w/b.width;
+    const mx=(ev.clientX-b.left)*k,my=(ev.clientY-b.top)*k;
+    let best=null,bd=1e9; for(const hh of hits){const d=(hh.x-mx)**2+(hh.y-my)**2; if(d<bd){bd=d;best=hh;}}
+    return bd<26*26?best:null;
+  };
+  rect.addEventListener('mousemove',ev=>{
+    const best=near(ev); if(!best){hideTip();return;}
+    const o=best.o, B=BONDS[o.bi], sp=spreadOf(o);
+    showTip(ev,`<b>${esc(B.c)} ${esc(B.n)}</b>${kindChip(o.bi,di)}<br>
+      ${tenorLabel(o.bi)}｜
+      ${best.old?`<span style="color:var(--muted)">${DATES[o.di]}（回溯期間內最近成交）</span><br>`:''}
+      剩餘 ${o.rem}y ｜ 存續 ${o.dur}y<br>
+      殖利率 <b>${pct(o.y)}</b> ｜ 面額 ${fmt(o.face,1)} 億<br>
+      對曲線利差 ${bp(sp)} bp ｜ 期間成交 ${bondDays[o.bi]} 日`);
+  });
+  rect.addEventListener('mouseleave',hideTip);
+  rect.addEventListener('click',ev=>{ const b=near(ev); if(b) gotoBond(b.o.bi); });
+}
+
+/* ---------------- 圖：熱區圖 ---------------- */
+function heatmap(host){
+  let list = BONDS.map((b,i)=>({b,i})).filter(o=>bondDays[o.i]>0);
+  if(S.hmColdOnly) list=list.filter(o=>isCold(o.i));
+  list.sort((a,c)=> S.hmSort==='rem' ? a.b.rem-c.b.rem
+                 : S.hmSort==='days' ? bondDays[c.i]-bondDays[a.i]
+                 : a.b.c.localeCompare(c.b.c));
+  const cw=7, ch=13, lw=120, top=18;
+  const w = lw+cw*ND+10, h = top+ch*list.length+6;
+  host.innerHTML='';
+  const svg=E('svg',{width:w,height:h,viewBox:`0 0 ${w} ${h}`,role:'img',
+    'aria-label':'成交熱區圖：每一列是一檔公債，每一格是該日成交面額'}); svg.style.width=w+'px';
+  host.appendChild(svg);
+  let cur='', curYear='';
+  DATES.forEach((d,i)=>{ const m=d.slice(0,7); if(m!==cur){cur=m;
+    const yr=d.slice(0,4), newYear=yr!==curYear; curYear=yr;
+    svg.appendChild(E('text',{x:lw+i*cw,y:12,fill:cssv(newYear?'--ink2':'--muted'),'font-size':10,
+      'font-weight':newYear?'600':'400'}, newYear ? yr+'年' : d.slice(5,7)+'月'));
+    svg.appendChild(E('line',{x1:lw+i*cw,x2:lw+i*cw,y1:top-4,y2:h-4,
+      stroke:cssv(newYear?'--axis':'--grid')}));
+  }});
+  let maxF = 1;                                   // 用迴圈算，資料量大時 Math.max(...arr) 會爆 call stack
+  for(const a of byBond) for(const o of a) if(o.face>maxF) maxF=o.face;
+  const steps=['--seq1','--seq2','--seq3','--seq4','--seq5','--seq6'];
+  list.forEach((o,row)=>{
+    const y=top+row*ch;
+    svg.appendChild(E('text',{x:0,y:y+10,fill:cssv(isBench(o.i)?'--accent':'--ink2'),
+      'font-size':10, 'font-weight':isBench(o.i)?'600':'400'},
+      o.b.c+(isBench(o.i)?' ★':'')+' '+o.b.rem+'y'));
+    for(const rec of byBond[o.i]){
+      const k = Math.min(steps.length-1, Math.floor(Math.sqrt(rec.face/maxF)*steps.length));
+      const cell=E('rect',{x:lw+rec.di*cw,y:y+1,width:cw-1.5,height:ch-3,rx:1.5,fill:cssv(steps[k]),style:'cursor:pointer'});
+      cell.addEventListener('mousemove',ev=>showTip(ev,
+        `<b>${esc(o.b.c)} ${esc(o.b.n)}</b><br>${esc(DATES[rec.di])}<br>面額 ${fmt(rec.face,1)} 億 ｜ 殖利率 ${pct(rec.y)}<br>
+         <span style="color:var(--muted)">點選檢視此券</span>`));
+      cell.addEventListener('mouseleave',hideTip);
+      cell.addEventListener('click',()=>{ S.date=rec.di; gotoBond(o.i); });
+      svg.appendChild(cell);
+    }
+  });
+}
+
+/* 目前市場別篩選下，有成交的日子才有意義：前後鍵與「最新」都跳過空日
+   （只看營業處所時有 31 個交易日沒有公債成交，只看等殖有 5 個）*/
+function stepDate(dir){
+  for(let i=S.date+dir; i>=0 && i<ND; i+=dir)
+    if(byDate[i].length){ S.date=i; renderDaily(); return; }
+}
+function lastTradedDate(){
+  for(let i=ND-1;i>=0;i--) if(byDate[i].length) return i;
+  return ND-1;
+}
+
+/* ---------------- 每日總覽 ---------------- */
+function dailyRows(){
+  const di=S.date;
+  return byDate[di].slice().sort((a,b)=>b.face-a.face).map(o=>{
+    const B=BONDS[o.bi], prevRec = o.prev;
+    return {o,B, sp:spreadOf(o), dy: prevRec?(o.y-prevRec.y)*100:null, gap: prevRec?di-prevRec.di:null,
+            mkt: o.mask===3?'處所＋等殖':MK[o.mask===1?0:1]};
+  });
+}
+function renderDaily(){
+  const di=S.date, day=byDate[di];
+  refreshDatePicker();
+  let prev=null; for(let d=di-1;d>=0;d--) if(byDate[d].length){prev=d;break;}
+  const face=day.reduce((a,o)=>a+o.face,0), otc=day.reduce((a,o)=>a+o.otc,0);
+  const wy = face? day.reduce((a,o)=>a+o.y*o.face,0)/face : null;
+  let pf=null,pwy=null;
+  if(prev!=null){ const pd=byDate[prev]; pf=pd.reduce((a,o)=>a+o.face,0);
+    pwy=pf?pd.reduce((a,o)=>a+o.y*o.face,0)/pf:null; }
+  const benchToday = day.filter(o=>isBench(o.bi,di)).length;
+  const coldToday = day.filter(o=>isCold(o.bi,di)).length;
+  document.getElementById('dInfo').textContent =
+    `第 ${di+1} / ${ND} 個有成交日${prev!=null?`｜前一交易日 ${DATES[prev]}`:''}`;
+  const kpi=(k,v,d)=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d||''}</div></div>`;
+  document.getElementById('dKpis').innerHTML =
+    kpi('成交面額', fmt(face,1)+' <span style="font-size:15.5px;color:var(--muted)">億</span>',
+        pf!=null?`前一交易日 ${fmt(pf,1)} 億`:'') +
+    kpi('成交券數', day.length, `指標券 ${benchToday} 檔 ｜ 非指標券（冷門）${coldToday} 檔`) +
+    kpi('成交面額加權平均殖利率', wy!=null?wy.toFixed(3)+'%':'—',
+        (wy!=null&&pwy!=null)?`較前一交易日 ${bp((wy-pwy)*100)} bp（券別組合不同，僅供參考）`:'') +
+    kpi('營業處所成交筆數', otc, '等殖成交系統未揭露筆數');
+  document.getElementById('curveLegend').innerHTML = S.market>=0
+    ? `<span><i style="background:var(--s1)"></i>當日成交</span><span><i style="background:var(--muted)"></i>回溯期間內最近成交（曲線節點）</span>`
+    : `<span><i style="background:var(--s1)"></i>營業處所</span><span><i style="background:var(--s2)"></i>等殖成交系統</span>
+       <span><i style="background:var(--s3)"></i>兩市場皆有</span><span><i style="background:var(--muted)"></i>回溯期間內最近成交（曲線節點）</span>`;
+  curveChart(document.getElementById('curveChart'));
+  const rows = dailyRows().map(r=>({_bi:r.o.bi, code:r.B.c, name:r.B.n,
+    kind:kindRank(r.o.bi,di), chip:kindChip(r.o.bi,di), t:r.B.t,
+    rem:r.o.rem, face:r.o.face, y:r.o.y, dy:r.dy, gap:r.gap, sp:r.sp, mkt:r.mkt, days:bondDays[r.o.bi]}));
+  sortableTable(document.getElementById('dTable'), [
+    {k:'code', label:'券號', l:1, asc:1, fmt:r=>esc(r.code)},
+    {k:'name', label:'名稱', l:1, asc:1, fmt:r=>esc(r.name)},
+    {k:'kind', label:'券別屬性', l:1, asc:1, fmt:r=>r.chip},
+    {k:'t',    label:'年期', fmt:r=>r.t!=null?r.t+'Y':'—'},
+    {k:'rem',  label:'剩餘年限', fmt:r=>fmt(r.rem,2)},
+    {k:'face', label:'面額(億)', fmt:r=>fmt(r.face,1)},
+    {k:'y',    label:'殖利率', fmt:r=>pct(r.y)},
+    {k:'dy',   label:'較上次成交(bp)', fmt:r=>bp(r.dy), cls:r=>r.dy>0?'pos':r.dy<0?'neg':''},
+    {k:'gap',  label:'距上次成交', fmt:r=>r.gap!=null?r.gap+' 日':'期間首次'},
+    {k:'sp',   label:'對曲線(bp)', fmt:r=>bp(r.sp), cls:r=>r.sp>0?'pos':r.sp<0?'neg':''},
+    {k:'mkt',  label:'市場', l:1, asc:1, fmt:r=>esc(r.mkt)},
+    {k:'days', label:'期間成交日數', fmt:r=>r.days},
+  ], rows, S.sortDaily, gotoBond);
+}
+
+/* 天期走勢的顯示期間：由最後一個交易日往回推，回傳起始的日期索引 */
+function rangeStart(){
+  if(S.range==='max' || !ND) return 0;
+  const last = DATES[ND-1];
+  const d = new Date(last+'T00:00:00Z');
+  let from;
+  if(S.range==='ytd') from = last.slice(0,4)+'-01-01';
+  else {
+    const months = {'3m':3, '6m':6, '1y':12}[S.range] || 0;
+    const t = new Date(d); t.setUTCMonth(t.getUTCMonth()-months);
+    from = t.toISOString().slice(0,10);
+  }
+  const i = DATES.findIndex(x=>x>=from);
+  return i<0 ? 0 : i;
+}
+
+/* ---------------- 天期走勢 ---------------- */
+function renderTenor(){
+  const x0 = rangeStart();
+  document.querySelectorAll('#tenorRange [data-range]').forEach(b=>
+    b.setAttribute('aria-pressed', b.dataset.range===S.range));
+  const RANGE_NAME = {'3m':'近 3 個月','6m':'近 6 個月','ytd':'今年以來','1y':'近 1 年','max':'全部期間'};
+  document.getElementById('tenorRangeInfo').innerHTML =
+    `<b>${RANGE_NAME[S.range]}</b>：${DATES[x0]} ～ ${DATES[ND-1]}（${ND-x0} 個交易日）`;
+  document.querySelectorAll('#tenorMode [data-mode]').forEach(b=>
+    b.setAttribute('aria-pressed', b.dataset.mode===S.tenorMode));
+  document.querySelectorAll('#tenorPick [data-tenor]').forEach(b=>{
+    const t=b.dataset.tenor;
+    b.setAttribute('aria-pressed', t==='all'
+      ? S.tenorPick.length===TENORS.length : S.tenorPick.includes(+t));
+  });
+  const ser = tenorSeries().filter(sr=>S.tenorPick.includes(sr.t))
+    .map(s=>Object.assign({}, s, {pts:s.pts.filter(p=>p.x>=x0)}));
+  // 這個分組涵蓋了所選期間多少成交面額？講清楚，免得把它當成全市場
+  let covered=0, total=0;
+  for(let d=x0; d<ND; d++) for(const o of byDate[d]) total+=o.face;
+  for(const sr of ser) for(const p of sr.pts) covered+=p.v;
+  document.getElementById('tenorCoverage').innerHTML =
+    `此分組涵蓋所選期間成交面額的 <b>${total?(covered/total*100).toFixed(0):0}%</b>`
+    + `（${fmt(covered,0)} / ${fmt(total,0)} 億）`
+    + (S.tenorMode==='band'
+        ? '——其餘落在區間外（台債成交高度集中在剩餘 0–2 年，那段不在任何一個天期區間內）。'
+        : '——只計指標券本身的成交，非指標券不納入。');
+  if(!ser.length){
+    document.getElementById('tenorLegend').innerHTML='';
+    document.getElementById('tenorChart').innerHTML='<div class="hint">目前沒有選任何天期，請在上方選擇要看的天期。</div>';
+    document.getElementById('tenorTable').innerHTML='';
+    document.getElementById('tenorStatRange').textContent='';
+  }
+  if(ser.length) document.getElementById('tenorLegend').innerHTML = ser.map(s=>
+    `<span><i style="background:var(${s.color})"></i>${s.name}（${s.pts.length} 個成交日${
+      S.tenorMode==='bench' && s.used && s.used.length ? '，' + s.used.join('→') : ''}）</span>`).join('');
+  if(ser.length) timeChart(document.getElementById('tenorChart'), ser.map(s=>Object.assign({},s,{maxGap:3,r:3})),
+    {h:300, x0, yfmt:v=>v.toFixed(2)+'%',
+     tip:h=>`<b>${DATES[h.p.x]}</b><br>${h.s.name}${h.p.code?`（${h.p.code}）`:''}：<b>${pct(h.p.y)}</b>`
+        +`<br>成交面額 ${fmt(h.p.v,1)} 億`});
+  const bars=[];
+  for(let d=0;d<ND;d++){
+    const v=[0,0];
+    bars.push({x:d,v});
+  }
+  for(const r of RECS){ if(S.market>=0 && r[2]!==S.market) continue; bars[r[0]].v[r[2]]+=r[3]; }
+  // 每月平均每日成交面額：用完整資料算（不受目前顯示期間裁切），只畫在看得到的那段
+  const monTotal = new Map();
+  bars.forEach(b=>{
+    const tot = b.v[0]+b.v[1];
+    if(!tot) return;                                   // 只計有成交的交易日
+    const m = DATES[b.x].slice(0,7);
+    const e = monTotal.get(m) || {sum:0, days:0};
+    e.sum += tot; e.days++; monTotal.set(m, e);
+  });
+  const monAvg = new Map([...monTotal].map(([m,e])=>[m, e.sum/e.days]));
+  const avgSegs = [];
+  for(let i=x0;i<ND;i++){
+    const m = DATES[i].slice(0,7);
+    if(!monAvg.has(m)) continue;
+    const last = avgSegs[avgSegs.length-1];
+    if(last && last.m===m) last.i1 = i;
+    else avgSegs.push({m, i0:i, i1:i, avg:monAvg.get(m)});
+  }
+  document.getElementById('volLegend').innerHTML =
+    `<span><i style="background:var(--s1)"></i>營業處所</span><span><i style="background:var(--s2)"></i>等殖成交系統</span>`
+    + `<span><i style="background:var(--s3)"></i>月平均（該月每日成交面額平均，以完整月份計算）</span>`;
+  barChart(document.getElementById('volChart'),bars.filter(b=>(b.v[0]||b.v[1]) && b.x>=x0),
+    {colors:['--s1','--s2'],h:200,x0,avgSegs,avgColor:'--s3',pad:X_PAD,
+     tip:h=>{
+       const m=DATES[h.p.x].slice(0,7), e=monTotal.get(m);
+       return `<b>${DATES[h.p.x]}</b><br>處所 ${fmt(h.p.v[0],1)} 億<br>等殖 ${fmt(h.p.v[1],1)} 億<br>`
+         + `合計 <b>${fmt(h.p.y,1)} 億</b>`
+         + (e ? `<br><span style="color:var(--muted)">${m} 月平均 ${fmt(e.sum/e.days,1)} 億／日（${e.days} 個成交日、合計 ${fmt(e.sum,0)} 億）</span>` : '');
+     }});
+  const totalDays = ND-x0;
+  const rows = ser.map(sr=>{
+    let w=0,sum=0,mn=Infinity,mx=-Infinity;
+    for(const p of sr.pts){ w+=p.v; sum+=p.y*p.v; mn=Math.min(mn,p.y); mx=Math.max(mx,p.y); }
+    const days=sr.pts.length;
+    return `<tr><td class="l">${sr.name}</td><td class="l">${sr.band || (sr.used||[]).join('→') || '—'}</td>
+      <td>${fmt(w,1)}</td><td>${days?(sum/w).toFixed(3)+'%':'—'}</td>
+      <td>${days?mn.toFixed(3)+'%':'—'}</td><td>${days?mx.toFixed(3)+'%':'—'}</td>
+      <td>${days} / ${totalDays}</td><td>${(days/totalDays*100).toFixed(0)}%</td></tr>`;
+  }).join('');
+  if(!ser.length) return;
+  document.getElementById('tenorStatRange').textContent = `（${DATES[x0]} ～ ${DATES[ND-1]}）`;
+  document.getElementById('tenorTable').innerHTML =
+    `<thead><tr><th class="l">天期</th><th class="l">${S.tenorMode==='band'?'剩餘年限區間':'期間內用到的券'}</th>
+     <th>成交面額(億)</th><th>加權殖利率</th>
+     <th>最低</th><th>最高</th><th>有成交日數</th><th>有成交日比率</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+/* ---------------- 個券檢視 ---------------- */
+function bondOptions(q=''){
+  const sel=document.getElementById('bPick');
+  const items=BONDS.map((b,i)=>({b,i})).filter(o=>bondDays[o.i]>0)
+    .filter(o=>!q||((o.b.c+o.b.n).toLowerCase().includes(q.toLowerCase())))
+    // 依發行日由新到舊；沒有發行日的（極少數）排在最後，同日再以券號排序
+    .sort((a,c)=>{
+      const x=a.b.iss||'', y=c.b.iss||'';
+      if(x!==y) return (y?y:'0000').localeCompare(x?x:'0000');
+      return c.b.c.localeCompare(a.b.c);
+    });
+  sel.innerHTML=items.map(o=>`<option value="${o.i}">${esc(o.b.c)} ${esc(o.b.n)}｜發行 ${esc(o.b.iss||'—')}${o.b.src==='off'?'':'（推估）'}｜${tenorLabel(o.i)}｜剩餘 ${o.b.rem}y｜成交 ${bondDays[o.i]} 日｜${kindName(o.i)}</option>`).join('');
+  if(!items.length){ S.bond=-1; return; }
+  if(!items.some(o=>o.i===S.bond)) S.bond=items[0].i;
+  sel.value=S.bond;
+}
+function gotoBond(bi){
+  S.bond=bi; setTab('bond');
+  const sel=document.getElementById('bPick');    // 原本聚焦的列已隱藏，焦點要接住
+  if(sel) sel.focus({preventScroll:true});
+}
+function renderBond(){
+  const bi=S.bond;
+  if(bi<0 || !BONDS[bi]){                      // 搜尋沒有結果：清空，不要留著上一檔
+    document.getElementById('bInfo').innerHTML='<span class="bad">找不到符合的券別，請換個關鍵字。</span>';
+    ['bondChart','spreadChart','bondVolChart'].forEach(id=>document.getElementById(id).innerHTML='');
+    document.getElementById('bondLegend').innerHTML='';
+    document.getElementById('bTable').innerHTML='';
+    return;
+  }
+  const B=BONDS[bi], recs=byBond[bi]||[];
+  document.getElementById('bInfo').innerHTML = recs.length
+    ? `${esc(B.c)} ${esc(B.n)}${kindChip(bi)}｜${tenorLabel(bi)}（發行日 ${issCell(bi)}${B.reopen?`，最近增額 ${esc(B.reopen)}`:''}）｜剩餘 ${B.rem}y ｜ 存續 ${B.dur}y`
+      + `｜期間成交 <b>${recs.length}</b> 日 / ${ND} ｜ 總面額 ${fmt(faceOf(bi),1)} 億`
+      + `｜最近成交 ${DATES[recs[recs.length-1].di]}（距最新 ${ND-1-recs[recs.length-1].di} 個交易日）`
+    : '此券在目前市場別篩選下無成交';
+  const own = {name:'成交殖利率', short:B.c, color:'--s1', pts:recs.map(o=>({x:o.di,y:o.y,o})), dash:'4 4', maxGap:1e9, r:4.5};
+  const cur = {name:'參考曲線', short:'參考曲線', color:'--muted', pts:[], markers:false, maxGap:3};
+  for(let d=0;d<ND;d++){ const v=curveLevelFor(bi,d); if(v!=null) cur.pts.push({x:d,y:v}); }
+  document.getElementById('bondLegend').innerHTML =
+    `<span><i style="background:var(--s1)"></i>${esc(B.c)} 成交殖利率（虛線僅連接成交點，中間並無成交）</span>
+     <span><i style="background:var(--muted)"></i>同日、同剩餘年限的參考曲線水準（已排除本券）</span>`;
+  timeChart(document.getElementById('bondChart'),[cur,own],{h:280,yfmt:v=>v.toFixed(2)+'%',
+    tip:h=>h.s.name==='成交殖利率'
+      ? `<b>${DATES[h.p.x]}</b><br>成交殖利率 <b>${pct(h.p.y)}</b><br>面額 ${fmt(h.p.o.face,1)} 億<br>對曲線 ${bp(spreadOf(h.p.o))} bp`
+      : `<b>${DATES[h.p.x]}</b><br>參考曲線 ${pct(h.p.y)}`});
+
+  const sp = recs.map(o=>({x:o.di,v:spreadOf(o),o})).filter(r=>r.v!=null);
+  const host=document.getElementById('spreadChart');
+  if(sp.length){
+    const h=180,f=frame(host,h,Object.assign({t:10,b:26},X_PAD));
+    const vals=sp.map(r=>r.v);
+    let lo=Math.min(0,...vals),hi=Math.max(0,...vals); const pd=(hi-lo||2)*.15; lo-=pd;hi+=pd;
+    const sx=i=>f.P.l+(ND<=1?0:i/(ND-1))*f.iw, sy=v=>f.P.t+(1-(v-lo)/(hi-lo))*f.ih;
+    grid(f,niceTicks(lo,hi,4),v=>v.toFixed(0),dateTicks(sx),sy);
+    f.svg.appendChild(E('line',{x1:f.P.l,x2:f.w-f.P.r,y1:sy(0),y2:sy(0),stroke:cssv('--axis'),'stroke-width':1.5}));
+    const hits=[];
+    for(const r of sp){
+      const y0=sy(0),y1=sy(r.v);
+      f.svg.appendChild(E('rect',{x:sx(r.x)-3,y:Math.min(y0,y1),width:6,height:Math.max(1.5,Math.abs(y1-y0)),rx:2,
+        fill:cssv(r.v>=0?'--s8':'--s1')}));
+      hits.push({x:sx(r.x),y:y1,p:{x:r.x,y:r.v,o:r.o},s:{name:'利差'}});
+    }
+    attachHover(f,hits,h=>`<b>${DATES[h.p.x]}</b><br>對曲線利差 <b>${bp(h.p.y)} bp</b><br>成交 ${pct(h.p.o.y)}｜面額 ${fmt(h.p.o.face,1)} 億`);
+  } else host.innerHTML='<div class="hint">此券剩餘年限落在曲線節點範圍外，或回溯期間內節點不足，無法計算利差。</div>';
+
+  barChart(document.getElementById('bondVolChart'),recs.map(o=>({x:o.di,v:[o.face]})),
+    {colors:['--s3'],h:150,pad:X_PAD,tip:h=>`<b>${DATES[h.p.x]}</b><br>面額 ${fmt(h.p.y,1)} 億`});
+
+  const trows = recs.map(o=>{
+    const pr = o.prev;
+    return {di:o.di, face:o.face, p:o.p, y:o.y, ylo:o.ylo, yhi:o.yhi,
+            dy: pr?(o.y-pr.y)*100:null, gap: pr?o.di-pr.di:null, sp:spreadOf(o),
+            mkt:o.mask===3?'處所＋等殖':MK[o.mask===1?0:1]};
+  });
+  sortableTable(document.getElementById('bTable'), [
+    {k:'di',  label:'交易日', l:1, fmt:r=>DATES[r.di]},
+    {k:'face',label:'面額(億)', fmt:r=>fmt(r.face,1)},
+    {k:'p',   label:'百元價', fmt:r=>fmt(r.p,4)},
+    {k:'y',   label:'殖利率', fmt:r=>pct(r.y)},
+    {k:'ylo', label:'最低', fmt:r=>pct(r.ylo)},
+    {k:'yhi', label:'最高', fmt:r=>pct(r.yhi)},
+    {k:'dy',  label:'較上次(bp)', fmt:r=>bp(r.dy), cls:r=>r.dy>0?'pos':r.dy<0?'neg':''},
+    {k:'gap', label:'間隔(日)', fmt:r=>r.gap==null?'—':r.gap},
+    {k:'sp',  label:'對曲線(bp)', fmt:r=>bp(r.sp), cls:r=>r.sp>0?'pos':r.sp<0?'neg':''},
+    {k:'mkt', label:'市場', l:1, asc:1, fmt:r=>esc(r.mkt)},
+  ], trows, S.sortBond);
+}
+
+/* ---------------- 冷門券雷達 ---------------- */
+function coldList(){
+  return BONDS.map((b,i)=>({b,i})).filter(o=>isCold(o.i))
+    .sort((a,c)=>byBond[c.i][byBond[c.i].length-1].di - byBond[a.i][byBond[a.i].length-1].di);
+}
+function renderCold(){
+  const all = coldList();
+  const cold = S.listMax ? all.filter(o=>bondDays[o.i]<=S.listMax) : all;
+  const nTraded = BONDS.filter((b,i)=>bondDays[i]>0).length;
+  document.getElementById('coldSub').textContent =
+    `非指標券共 ${all.length} 檔（期間有成交的券共 ${nTraded} 檔）`
+    + (S.listMax ? `，其中期間成交日數 ≤ ${S.listMax} 的有 ${cold.length} 檔。` : '，依最近成交日排序。');
+  // 現行指標券一覽
+  const bm = benchMap(ND-1);
+  const bRows = [...bm.entries()].sort((a,b)=>a[0]-b[0]).map(([t,bi])=>{
+    const recs=byBond[bi], rec=recs[recs.length-1];
+    return {_bi:bi, t, code:BONDS[bi].c, name:BONDS[bi].n, iss:BONDS[bi].iss, src:BONDS[bi].src,
+            rem:BONDS[bi].rem, days:bondDays[bi],
+            lastDi:rec?rec.di:null, y:rec?rec.y:null, face:faceOf(bi)};
+  });
+  sortableTable(document.getElementById('benchTable'), [
+    {k:'t',     label:'天期', fmt:r=>r.t+'Y', asc:1},
+    {k:'code',  label:'券號', l:1, asc:1, fmt:r=>esc(r.code)},
+    {k:'name',  label:'名稱', l:1, asc:1, fmt:r=>esc(r.name)},
+    {k:'iss',   label:'發行日', l:1, fmt:r=>issCell(r._bi)},   // 現行指標券表以最新交易日為準，不跟每日總覽的日期走
+    {k:'rem',   label:'剩餘（最近成交日）', fmt:r=>fmt(r.rem,2)},
+    {k:'days',  label:'期間成交日數', fmt:r=>r.days},
+    {k:'lastDi',label:'最近成交', l:1, fmt:r=>r.lastDi!=null?DATES[r.lastDi]:'—'},
+    {k:'y',     label:'最近殖利率', fmt:r=>pct(r.y)},
+    {k:'face',  label:'期間總面額(億)', fmt:r=>fmt(r.face,1)},
+  ], bRows, S.sortBench, gotoBond);
+  const toRow = o => {
+    const rec = byBond[o.i][byBond[o.i].length-1];
+    return {_bi:o.i, code:o.b.c, name:o.b.n, t:o.b.t, rem:o.b.rem, days:bondDays[o.i],
+            lastDi:rec.di, since:ND-1-rec.di, y:rec.y, sp:spreadOf(rec),
+            face:faceOf(o.i), lastFace:rec.face};   // face＝期間累計；lastFace＝最近那一天的成交面額
+  };
+  // 兩張冷門券表共用欄位：不看「距今」與期間累計，直接看最近那一天成交了多少
+  const cols = [
+    {k:'code',  label:'券號', l:1, asc:1, fmt:r=>esc(r.code)},
+    {k:'name',  label:'名稱', l:1, asc:1, fmt:r=>esc(r.name)},
+    {k:'t',     label:'天期', fmt:r=>r.t!=null?r.t+'Y':'—'},
+    {k:'rem',   label:'剩餘（最近成交日）', fmt:r=>fmt(r.rem,2)},
+    {k:'days',  label:'成交日數', fmt:r=>r.days},
+    {k:'lastDi',label:'最近成交', l:1, fmt:r=>DATES[r.lastDi]},
+    {k:'lastFace', label:'成交面額(億)', fmt:r=>fmt(r.lastFace,1)},
+    {k:'y',     label:'最近殖利率', fmt:r=>pct(r.y)},
+    {k:'sp',    label:'對曲線(bp)', fmt:r=>bp(r.sp), cls:r=>r.sp>0?'pos':r.sp<0?'neg':''},
+  ];
+  const fallback = st => { if(!cols.some(c=>c.k===st.k)){ st.k='lastDi'; st.dir=-1; } };
+  fallback(S.sortCold); fallback(S.sortRecent);
+  const rows = cold.map(toRow);
+  sortableTable(document.getElementById('coldTable'), cols, rows, S.sortCold, gotoBond);
+  sortableTable(document.getElementById('recentColdTable'), cols,
+    rows.filter(r=>r.lastDi>=ND-10), S.sortRecent, gotoBond);
+  heatmap(document.getElementById('hmChart'));
+}
+
+/* ---------------- 週報 ----------------
+   週＝週一到週五；只列資料裡有交易日的週（整週休市的週不會出現）。
+   指標券以「該週最後一個交易日」的指標券為準；變動一律拿同一檔券比，
+   不拿換券前後兩檔不同的券相減。 */
+let WEEKS = [];
+const addDays = (ds,n) => { const d=new Date(ds+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); };
+const mondayOf = ds => { const d=new Date(ds+'T00:00:00Z'); return addDays(ds, -((d.getUTCDay()+6)%7)); };
+const DOW = ['日','一','二','三','四','五','六'];
+const dowOf = ds => DOW[new Date(ds+'T00:00:00Z').getUTCDay()];
+function isoWeek(ds){
+  const d=new Date(ds+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+3-((d.getUTCDay()+6)%7));   // 該週的週四
+  const y=d.getUTCFullYear(), jan1=Date.UTC(y,0,1);
+  return {y, w:1+Math.floor((d-jan1)/86400000/7)};
+}
+const localToday = () => { const t=new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; };
+const localStamp = () => { const t=new Date(); return localToday()+' '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0'); };
+function buildWeeks(){
+  WEEKS=[];
+  DATES.forEach((d,i)=>{
+    const mon=mondayOf(d), last=WEEKS[WEEKS.length-1];
+    if(last && last.mon===mon) last.i1=i;
+    else WEEKS.push({mon, fri:addDays(mon,4), i0:i, i1:i});
+  });
+}
+/* 完整週＝週五已過，或資料已包含週五 */
+const weekDone = w => { const W=WEEKS[w]; return W.fri < localToday() || DATES[W.i1] >= W.fri; };
+function defaultWeek(){
+  let w=WEEKS.length-1;
+  while(w>0 && !weekDone(w)) w--;
+  return w;
+}
+const pDate = (di, ref) => { const d=DATES[di]; return d.slice(0,4)===DATES[ref].slice(0,4) ? d.slice(5).replace('-','/') : d.replace(/-/g,'/'); };
+const lastUpTo = (bi,di) => { const a=byBond[bi]; for(let k=a.length-1;k>=0;k--) if(a[k].di<=di) return a[k]; return null; };
+const lastBefore = (bi,di) => lastUpTo(bi,di-1);
+
+function weekBench(w){
+  const W=WEEKS[w], P=w>0?WEEKS[w-1]:null;
+  const bm=benchMap(W.i1), pbm=P?benchMap(P.i1):new Map();
+  return BENCH_TENORS.map(t=>{
+    const bi=bm.get(t), pbi=pbm.get(t);
+    const prevBi = pbi!=null ? pbi : null;
+    const prevRec = prevBi!=null ? lastUpTo(prevBi, P.i1) : null;          // 前一週曲線：當時的指標券
+    const prevStale = !!(prevRec && prevRec.di < P.i0);
+    if(bi==null) return {t, bi:null, prevBi, prevRec, prevStale};
+    const inWk = byBond[bi].filter(o=>o.di>=W.i0 && o.di<=W.i1);
+    const cur = inWk.length ? inWk[inWk.length-1] : null;
+    const base = lastBefore(bi, W.i0);                                     // 同一檔券在本週之前的最後成交
+    const stale = cur ? null : lastUpTo(bi, W.i1);
+    const ys = inWk.map(o=>o.y);
+    return {t, bi, code:BONDS[bi].c, name:BONDS[bi].n, cur, base, stale, prevBi, prevRec, prevStale,
+      switched: prevBi!=null && prevBi!==bi, newBench: prevBi==null,
+      baseWI: !!(base && isWI(bi, base.di)),
+      chg: cur && base ? (cur.y-base.y)*100 : null,
+      days: inWk.length, face: inWk.reduce((a,o)=>a+o.face,0),
+      lo: ys.length?Math.min(...ys):null, hi: ys.length?Math.max(...ys):null};
+  });
+}
+const kindOf = (bi,di) => isWI(bi,di) ? 2 : isBench(bi,di) ? 0 : 1;   // 0 指標、1 非指標、2 發行前
+function weekFlows(W){
+  const v=[0,0,0], bonds=[new Set(),new Set(),new Set()];
+  const days=[];
+  for(let d=W.i0; d<=W.i1; d++){
+    const dv=[0,0,0];
+    for(const o of byDate[d]){ const k=kindOf(o.bi,d); dv[k]+=o.face; v[k]+=o.face; bonds[k].add(o.bi); }
+    days.push({di:d, v:dv});
+  }
+  return {v, n:bonds.map(s=>s.size), total:v[0]+v[1]+v[2], days};
+}
+const LONG_GAP = 20;                                   // 超過 20 個交易日沒成交＝久違
+function weekColdRows(W){
+  const m=new Map();
+  for(let d=W.i0; d<=W.i1; d++) for(const o of byDate[d]){
+    if(kindOf(o.bi,d)!==1) continue;
+    if(!m.has(o.bi)) m.set(o.bi,[]);
+    m.get(o.bi).push(o);
+  }
+  return [...m].map(([bi,recs])=>{
+    const first=recs[0], last=recs[recs.length-1], prior=lastBefore(bi, W.i0), B=BONDS[bi];
+    const gap = prior ? first.di-prior.di : null;
+    return {_bi:bi, code:B.c, name:B.n, t:B.t, rem:last.rem, days:recs.length,
+      face:recs.reduce((a,o)=>a+o.face,0), lastDi:last.di, y:last.y, sp:spreadOf(last),
+      priorDi: prior?prior.di:null, gap, chg: prior?(last.y-prior.y)*100:null,
+      long: gap==null || gap>LONG_GAP};
+  });
+}
+const BUCKETS = [[0,1,'1 年以下'],[1,2,'1–2 年'],[2,5,'2–5 年'],[5,10,'5–10 年'],[10,20,'10–20 年'],[20,99,'20 年以上']];
+function bucketFace(W){
+  const v=BUCKETS.map(()=>0), n=BUCKETS.map(()=>new Set());
+  for(let d=W.i0; d<=W.i1; d++) for(const o of byDate[d]){
+    if(kindOf(o.bi,d)!==1) continue;
+    const k=BUCKETS.findIndex(b=>o.rem>=b[0] && o.rem<b[1]);
+    if(k>=0){ v[k]+=o.face; n[k].add(o.bi); }
+  }
+  return {v, n:n.map(s=>s.size)};
+}
+
+/* 類別軸長條圖：groups 並排（stacked=false）或堆疊；值可正可負 */
+function catBars(host, cats, groups, opts={}){
+  const h=opts.h||220, f=frame(host,h,Object.assign({l:52,r:16,t:18,b:30},opts.pad));
+  const n=cats.length, stacked=!!opts.stacked;
+  const tops = cats.map((c,i)=> stacked ? groups.reduce((a,g)=>a+(g.vals[i]||0),0) : Math.max(0,...groups.map(g=>g.vals[i]||0)));
+  const bots = cats.map((c,i)=> stacked ? 0 : Math.min(0,...groups.map(g=>g.vals[i]==null?0:g.vals[i])));
+  let hi=Math.max(...tops, opts.minHi||1), lo=Math.min(...bots, 0);
+  if(lo<0){ const p=(hi-lo)*.12; hi+=p; lo-=p; } else hi*=1.12;
+  const sy=v=>f.P.t+(1-(v-lo)/((hi-lo)||1))*f.ih;
+  const band=f.iw/n, cx=i=>f.P.l+(i+.5)*band;
+  grid(f, niceTicks(lo,hi,4), opts.yfmt||(v=>fmt(v,0)), cats.map((c,i)=>({x:cx(i), label:c})), sy);
+  if(lo<0) f.svg.appendChild(E('line',{x1:f.P.l,x2:f.w-f.P.r,y1:sy(0),y2:sy(0),stroke:cssv('--axis'),'stroke-width':1.5}));
+  const gcount = stacked ? 1 : groups.length;
+  const bw = Math.min(opts.maxBar||40, band*.62/gcount);
+  const hits=[];
+  cats.forEach((c,i)=>{
+    let base=0;
+    groups.forEach((g,k)=>{
+      const v=g.vals[i];
+      const x = stacked ? cx(i)-bw/2 : cx(i)-bw*gcount/2 + k*bw;
+      if(v==null){
+        if(opts.nullLabel) f.svg.appendChild(E('text',{x:x+bw/2,y:sy(0)-6,'text-anchor':'middle',fill:cssv('--muted'),'font-size':11},opts.nullLabel));
+        return;
+      }
+      if(!v) return;
+      const a = stacked ? base : 0, b = stacked ? base+v : v;
+      const y0=sy(a), y1=sy(b);
+      const col = typeof g.color==='function' ? g.color(v) : g.color;
+      f.svg.appendChild(E('rect',{x:x+(stacked?0:1),y:Math.min(y0,y1),width:Math.max(2,bw-(stacked?0:2)),
+        height:Math.max(1,Math.abs(y1-y0)-(stacked&&k?1.5:0)),rx:2,fill:cssv(col)}));
+      if(opts.valueLabel){
+        const up = b>=a;
+        f.svg.appendChild(E('text',{x:x+bw/2,y:up?Math.min(y0,y1)-5:Math.max(y0,y1)+13,'text-anchor':'middle',
+          fill:cssv('--ink'),'font-size':11.5,'font-weight':'600'},opts.valueLabel(v,g,i)));
+      }
+      if(stacked) base+=v;
+    });
+    if(stacked && opts.totalLabel && base>0)
+      f.svg.appendChild(E('text',{x:cx(i),y:sy(base)-5,'text-anchor':'middle',fill:cssv('--ink2'),'font-size':11,'font-weight':'600'},opts.totalLabel(base,i)));
+    hits.push({x:cx(i), y:sy(stacked?base:Math.max(0,...groups.map(g=>g.vals[i]||0))), p:{i}, s:{name:''}});
+  });
+  attachHover(f,hits,opts.tip||(hh=>esc(cats[hh.p.i])));
+}
+
+/* 指標券殖利率：前一週 vs 本週，橫軸為天期（等距類別） */
+function weekCurveChart(host, rows){
+  const h=PH(260,142), f=frame(host,h,{l:56,r:20,t:14,b:30});
+  const n=rows.length, band=f.iw/n, cx=i=>f.P.l+(i+.5)*band;
+  const ptsCur = rows.map((r,i)=>{ const o=r.cur||r.stale; return o?{i,y:o.y,o,hollow:!r.cur,code:r.code}:null; });
+  const ptsPrev = rows.map((r,i)=> r.prevRec?{i,y:r.prevRec.y,o:r.prevRec,hollow:r.prevStale,code:BONDS[r.prevBi].c}:null);
+  const ys=[...ptsCur,...ptsPrev].filter(Boolean).map(p=>p.y);
+  if(!ys.length){ host.innerHTML='<div class="hint">本週與前一週指標券皆無成交紀錄</div>'; return; }
+  let lo=Math.min(...ys), hi=Math.max(...ys); const pd=(hi-lo||.2)*.18; lo-=pd; hi+=pd;
+  const sy=v=>f.P.t+(1-(v-lo)/(hi-lo))*f.ih;
+  grid(f, niceTicks(lo,hi,5), v=>v.toFixed(2)+'%', rows.map((r,i)=>({x:cx(i),label:r.t+'Y'})), sy);
+  const hits=[];
+  const draw=(pts,col,name,dash)=>{
+    const segs=[]; let seg=[];
+    // 空心點（該週無成交）不與實心點連線，免得把舊成交看成本週曲線的一部分
+    pts.forEach(p=>{ if(p && !p.hollow) seg.push(p); else { if(seg.length) segs.push(seg); seg=[]; } });
+    if(seg.length) segs.push(seg);
+    for(const sg of segs) if(sg.length>1) f.svg.appendChild(E('path',{d:sg.map((p,k)=>(k?'L':'M')+cx(p.i)+' '+sy(p.y)).join(' '),
+      fill:'none',stroke:col,'stroke-width':2,'stroke-dasharray':dash||'','stroke-linejoin':'round'}));
+    pts.forEach(p=>{ if(!p) return;
+      f.svg.appendChild(E('circle',{cx:cx(p.i),cy:sy(p.y),r:4.5,fill:p.hollow?cssv('--surface'):col,stroke:p.hollow?col:cssv('--surface'),'stroke-width':2}));
+      hits.push({x:cx(p.i),y:sy(p.y),p,s:{name}});
+    });
+  };
+  draw(ptsPrev, cssv('--muted'), '前一週', '5 4');
+  draw(ptsCur, cssv('--accent'), '本週');
+  attachHover(f,hits,hh=>{
+    const p=hh.p, r=rows[p.i];
+    return `<b>${r.t}年期指標券・${hh.s.name}</b><br>${esc(p.code)}：<b>${pct(p.y)}</b><br>`
+      + `成交日 ${DATES[p.o.di]}${p.hollow?`<br><span style="color:var(--muted)">${hh.s.name}無成交，此為更早的最後一次成交</span>`:''}`;
+  }, hh=>gotoBond(hh.p.o.bi));
+}
+
+function renderWeek(){
+  if(!WEEKS.length) return;
+  if(S.week<0 || S.week>=WEEKS.length) S.week=defaultWeek();
+  const w=S.week, W=WEEKS[w], P=w>0?WEEKS[w-1]:null;
+  const wk=isoWeek(W.mon), done=weekDone(w);
+  document.getElementById('wLabel').innerHTML =
+    `${W.mon}（一）～ ${W.fri}（五）<small>${wk.y} 年第 ${wk.w} 週${done?'':'・<span class="chip wi">進行中</span>'}</small>`;
+  document.getElementById('wPrev').disabled = w<=0;
+  document.getElementById('wNext').disabled = w>=WEEKS.length-1;
+  const tradeDays=[]; for(let d=W.i0; d<=W.i1; d++) if(byDate[d].length) tradeDays.push(d);
+  document.getElementById('wPrintTitle').innerHTML =
+    `公債買賣斷市場週報<small>${W.mon.replace(/-/g,'/')}（一）～ ${W.fri.slice(5).replace('-','/')}（五）｜第 ${wk.w} 週${done?'':'（進行中）'}</small>`;
+  document.getElementById('wPrintMeta').innerHTML =
+    `${['合併（處所＋等殖）','營業處所','等殖成交系統'][S.market+1]}｜曲線回溯 ${S.win} 日<br>`
+    + `本週有成交 ${tradeDays.length} 天${P?`｜比較週 ${P.mon.slice(5).replace('-','/')}～${P.fri.slice(5).replace('-','/')}`:''}<br>`
+    + `資料至 ${esc(M.end)}｜列印 ${localToday()}｜${APP_VERSION}`;
+  document.getElementById('wInfo').innerHTML =
+    `本週資料日 ${W.i1-W.i0+1} 天、有公債成交 ${tradeDays.length} 天（${[...Array(W.i1-W.i0+1)].map((_,k)=>DATES[W.i0+k].slice(5).replace('-','/')).join('、')}）`
+    + (P?`｜前一週：${P.mon} ～ ${P.fri}`:'｜資料期間第一週，沒有前一週可比較')
+    + (P && addDays(P.mon,7)!==W.mon ? '<span class="chip cold" style="margin-left:6px">前一週之間有整週休市</span>':'');
+
+  const F=weekFlows(W), PF=P?weekFlows(P):null;
+  const bench=weekBench(w), cold=weekColdRows(W);
+  const longRows=cold.filter(r=>r.long);
+  const chgPct=(a,b)=> b ? `${a>=b?'+':''}${((a/b-1)*100).toFixed(0)}%` : '—';
+  const kpi=(k,v,d)=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d||''}</div></div>`;
+  const unit=' <span style="font-size:15.5px;color:var(--muted)">億</span>';
+  const share=F.total?F.v[1]/F.total*100:0, pshare=PF&&PF.total?PF.v[1]/PF.total*100:null;
+  document.getElementById('wKpis').innerHTML =
+    kpi('本週成交面額', fmt(F.total,1)+unit,
+        PF?`前一週 ${fmt(PF.total,1)} 億（${chgPct(F.total,PF.total)}）｜日均 ${fmt(tradeDays.length?F.total/tradeDays.length:0,1)} 億`:'')
+    + kpi('指標券成交', fmt(F.v[0],1)+unit, `${F.n[0]} 檔${PF?`｜前一週 ${fmt(PF.v[0],1)} 億`:''}`)
+    + kpi('非指標券（冷門券）成交', fmt(F.v[1],1)+unit,
+        `${F.n[1]} 檔、占 ${share.toFixed(0)}%${pshare!=null?`｜前一週 ${fmt(PF.v[1],1)} 億、占 ${pshare.toFixed(0)}%`:''}`)
+    + kpi('久違成交的冷門券', longRows.length+' <span style="font-size:15.5px;color:var(--muted)">檔</span>',
+        `距上次成交超過 ${LONG_GAP} 個交易日${F.v[2]?`｜另有發行前交易 ${fmt(F.v[2],1)} 億`:''}`);
+
+  // 文字摘要
+  const bits=bench.filter(r=>r.bi!=null).map(r=>{
+    if(!r.cur) return `${r.t}Y 本週無成交`;
+    if(r.chg==null) return `${r.t}Y ${esc(r.code)} ${pct(r.cur.y)}（無前次成交可比）`;
+    const c=r.chg; const word = Math.abs(c)<0.05 ? '持平' : c>0 ? '上升' : '下降';
+    return `${r.t}Y ${esc(r.code)} <b class="${c>0.05?'pos':c<-0.05?'neg':''}">${word}${Math.abs(c)<0.05?'':' '+Math.abs(c).toFixed(1)+' bp'}</b>（${r.base.y.toFixed(3)}%→${r.cur.y.toFixed(3)}%）`;
+  });
+  const topCold=cold.slice().sort((a,b)=>b.face-a.face).slice(0,3);
+  document.getElementById('wSummary').innerHTML = F.total
+    ? `<b>指標券</b>：${bits.join('；')}。<br>`
+      + `<b>非指標券</b>：成交 ${F.n[1]} 檔、${fmt(F.v[1],1)} 億元，占全週 ${share.toFixed(0)}%`
+      + (PF?`（前一週 ${fmt(PF.v[1],1)} 億元、${pshare!=null?pshare.toFixed(0):'—'}%）`:'')
+      + (topCold.length?`；面額前三為 ${topCold.map(r=>`${esc(r.code)}（${r.t!=null?r.t+'Y，':''}剩 ${r.rem.toFixed(1)} 年，${fmt(r.face,1)} 億）`).join('、')}`:'')
+      + (longRows.length?`；久違成交 ${longRows.length} 檔：${longRows.map(r=>esc(r.code)).join('、')}`:'') + '。'
+    : '本週在目前市場別篩選下沒有公債買賣斷成交。';
+
+  // 圖一、二：指標券
+  document.getElementById('wCurveLegend').innerHTML =
+    PRINTING()
+    ? `<span><i style="background:var(--accent)"></i>本週</span><span><i style="background:var(--muted)"></i>前一週（虛線）</span><span>空心＝無成交</span>`
+    : `<span><i style="background:var(--accent)"></i>本週最後成交</span><span><i style="background:var(--muted)"></i>前一週最後成交（虛線）</span><span class="sub">空心＝該週無成交</span>`;
+  const brows=bench.filter(r=>r.bi!=null || r.prevBi!=null);
+  weekCurveChart(document.getElementById('wCurveChart'), brows);
+  catBars(document.getElementById('wBpChart'), brows.map(r=>r.t+'Y'),
+    [{name:'變動', color:v=>v>=0?'--s8':'--s1', vals:brows.map(r=>r.chg)}],
+    {h:PH(260,142), minHi:2, maxBar:46, yfmt:v=>(v>0?'+':'')+v.toFixed(v%1?1:0), nullLabel:'無成交',
+     valueLabel:v=>(v>0?'+':'')+v.toFixed(1),
+     tip:hh=>{ const r=brows[hh.p.i];
+       if(r.chg==null) return `<b>${r.t}Y ${esc(r.code||'')}</b><br>${r.cur?'本週之前無成交可比':'本週無成交'}`;
+       return `<b>${r.t}Y ${esc(r.code)}</b><br>${DATES[r.base.di]} ${pct(r.base.y)}${r.baseWI?'（發行前）':''}<br>→ ${DATES[r.cur.di]} ${pct(r.cur.y)}<br>變動 <b>${bp(r.chg)} bp</b>`; }});
+
+  const wbRows = bench.filter(r=>r.bi!=null).map(r=>({_bi:r.bi, t:r.t, code:r.code, name:r.name,
+    curDi:r.cur?r.cur.di:null, y:r.cur?r.cur.y:null, staleDi:r.stale?r.stale.di:null, staleY:r.stale?r.stale.y:null,
+    baseDi:r.base?r.base.di:null, baseY:r.base?r.base.y:null, baseWI:r.baseWI, chg:r.chg,
+    lo:r.lo, hi:r.hi, days:r.days, face:r.face,
+    note: !r.cur ? '本週無成交' : r.switched ? `本週換券（前一週 ${esc(BONDS[r.prevBi].c)}）` : r.newBench ? '本週起列為指標券' : ''}));
+  sortableTable(document.getElementById('wBenchTable'), [
+    {k:'t',    label:'天期', asc:1, fmt:r=>r.t+'Y'},
+    {k:'code', label:'指標券', l:1, asc:1, fmt:r=>esc(r.code)},
+    {k:'curDi',label:'本週最後成交', c:1, pl:'最後成交', pf:r=>r.curDi!=null?DATES[r.curDi].slice(5).replace('-','/'):'<span style="color:var(--muted)">無成交</span>', fmt:r=>r.curDi!=null?DATES[r.curDi]:'<span style="color:var(--muted)">無成交</span>'},
+    {k:'y',    label:'殖利率', fmt:r=>pct(r.y)},
+    {k:'baseDi',label:'比較基準（前次成交）', c:1, pl:'前次成交', pf:r=>r.baseDi!=null?`${pDate(r.baseDi,W.i1)} ${pct(r.baseY)}${r.baseWI?' <span class="chip wi">發行前</span>':''}`:'—', fmt:r=>r.baseDi!=null?`${DATES[r.baseDi]} ${pct(r.baseY)}${r.baseWI?' <span class="chip wi">發行前</span>':''}`:'—'},
+    {k:'chg',  label:'較前一週(bp)', fmt:r=>bp(r.chg), cls:r=>r.chg>0?'pos':r.chg<0?'neg':''},
+    {k:'lo',   label:'本週區間', fmt:r=>r.lo!=null?(r.lo===r.hi?pct(r.lo):`${r.lo.toFixed(3)}–${r.hi.toFixed(3)}%`):'—'},
+    {k:'days', label:'成交日數', pl:'日數', fmt:r=>r.days},
+    {k:'face', label:'面額(億)', fmt:r=>fmt(r.face,1)},
+    {k:'note', label:'備註', l:1, asc:1, cls:()=>'wrap', fmt:r=>r.note},
+  ], wbRows, S.sortWB, gotoBond);
+
+  // 圖三：每日成交面額
+  catBars(document.getElementById('wDayChart'), F.days.map(x=>`${DATES[x.di].slice(5).replace('-','/')}（${dowOf(DATES[x.di])}）`),
+    [0,1,2].map(k=>({name:['指標券','非指標券','發行前'][k], color:['--s1','--s2','--s4'][k], vals:F.days.map(x=>x.v[k])})),
+    {h:PH(220,124), stacked:true, maxBar:PH(56,64), totalLabel:v=>fmt(v,1),
+     tip:hh=>{ const x=F.days[hh.p.i], t=x.v[0]+x.v[1]+x.v[2];
+       return `<b>${DATES[x.di]}（${dowOf(DATES[x.di])}）</b><br>指標券 ${fmt(x.v[0],1)} 億<br>非指標券 ${fmt(x.v[1],1)} 億<br>`
+         + (x.v[2]?`發行前 ${fmt(x.v[2],1)} 億<br>`:'') + `合計 <b>${fmt(t,1)} 億</b>（${byDate[x.di].length} 檔）`; }});
+
+  // 圖四：非指標券剩餘年限分布
+  const BK=bucketFace(W), PBK=P?bucketFace(P):null;
+  document.getElementById('wBucketLegend').innerHTML =
+    `<span><i style="background:var(--accent)"></i>本週</span>` + (P?`<span><i style="background:var(--axis)"></i>前一週</span>`:'')
+    + `<span class="sub">剩餘年限以成交當日為準</span>`;
+  const bgroups=[];
+  if(PBK) bgroups.push({name:'前一週', color:'--axis', vals:PBK.v});
+  bgroups.push({name:'本週', color:'--accent', vals:BK.v});
+  catBars(document.getElementById('wBucketChart'), BUCKETS.map(b=>b[2]), bgroups,
+    {h:PH(220, cold.length>24?106:150), maxBar:PH(34,40), valueLabel:(v,g)=>g.name==='本週'?fmt(v,1):'',
+     tip:hh=>{ const i=hh.p.i;
+       return `<b>剩餘 ${BUCKETS[i][2]}</b><br>本週 ${fmt(BK.v[i],1)} 億（${BK.n[i]} 檔）`
+         + (PBK?`<br>前一週 ${fmt(PBK.v[i],1)} 億（${PBK.n[i]} 檔）`:''); }});
+
+  // 表：非指標券明細
+  document.getElementById('wColdCard').classList.toggle('dense', cold.length>24);   // 檔數多時列印版壓縮列高，確保第 2 頁放得下
+  document.getElementById('wColdSub').innerHTML = cold.length
+    ? `本週成交的非指標券共 ${cold.length} 檔、${fmt(F.v[1],1)} 億元；其中久違成交 ${longRows.length} 檔。<span class="noprint">點選列可進入個券檢視。</span>`
+    : '本週沒有非指標券成交。';
+  sortableTable(document.getElementById('wColdTable'), [
+    {k:'code', label:'券號', l:1, asc:1, fmt:r=>esc(r.code)+(r.long?' <span class="chip long">久違</span>':'')},
+    {k:'name', label:'名稱', l:1, asc:1, fmt:r=>esc(r.name)},
+    {k:'t',    label:'年期', fmt:r=>r.t!=null?r.t+'Y':'—'},
+    {k:'rem',  label:'剩餘年限', pl:'剩餘(年)', fmt:r=>fmt(r.rem,2)},
+    {k:'days', label:'成交日數', pl:'日數', fmt:r=>r.days},
+    {k:'face', label:'面額(億)', fmt:r=>fmt(r.face,1)},
+    {k:'lastDi',label:'最後成交', l:1, pf:r=>DATES[r.lastDi].slice(5).replace('-','/'), fmt:r=>DATES[r.lastDi]},
+    {k:'y',    label:'殖利率', fmt:r=>pct(r.y)},
+    {k:'sp',   label:'對曲線(bp)', fmt:r=>bp(r.sp), cls:r=>r.sp>0?'pos':r.sp<0?'neg':''},
+    {k:'gap',  label:'距上次成交', pl:'距上次', pf:r=>r.gap!=null?r.gap+' 日':'首次', fmt:r=>r.gap!=null?r.gap+' 日':'資料期間首次'},
+    {k:'priorDi',label:'上次成交', l:1, pf:r=>r.priorDi!=null?pDate(r.priorDi,W.i1):'—', fmt:r=>r.priorDi!=null?DATES[r.priorDi]:'—'},
+    {k:'chg',  label:'較上次(bp)', fmt:r=>bp(r.chg), cls:r=>r.chg>0?'pos':r.chg<0?'neg':''},
+  ], cold, S.sortWC, gotoBond);
+}
+
+function textZoom(){
+  // 用 60px 的大字量：字級夠大才不會被「最小字級」設定撐大而誤判成文字縮放
+  const txt='MMMMMMMMMM';
+  const svg=E('svg',{width:900,height:90}); svg.style.cssText='position:absolute;left:-9999px;top:0';
+  const t=E('text',{x:0,y:70,'font-size':60,'font-family':'Times New Roman'},txt); svg.appendChild(t);
+  const sp=document.createElement('span'); sp.textContent=txt;
+  sp.style.cssText='position:absolute;left:-9999px;top:0;white-space:nowrap;font-family:"Times New Roman";font-size:60px';
+  document.body.append(svg,sp);
+  let r=1; try{ const bw=t.getBBox().width; if(bw>0) r=sp.getBoundingClientRect().width/bw; }catch(e){}
+  svg.remove(); sp.remove();
+  return (r>0.5 && r<4) ? r : 1;
+}
+/* 列印模式：只在週報分頁啟用；強制淺色、以 A4 紙寬重畫週報 */
+let PRINT_STATE=null;
+function enterPrint(){
+  if(PRINT_STATE || S.tab!=='week') return;
+  PRINT_STATE={theme:document.documentElement.getAttribute('data-theme')};
+  document.documentElement.setAttribute('data-theme','light');
+  // 瀏覽器若開了「只放大文字」，HTML 文字會被放大、SVG 圖上文字不會，
+  // 版面就會撐破紙寬。量出放大倍率，列印字級反向縮回去。（要在進入列印模式前量）
+  const z=textZoom();
+  document.body.classList.add('printing');
+  document.body.style.setProperty('--pz', z>1.03 ? (1/z).toFixed(3) : '1');
+  hideTip();
+  renderWeek();
+  fitSheets();
+}
+/* 每張紙依內容定高；內容若超過一頁（成交檔數特別多的週）就等比例再縮，確保固定 2 頁。
+   .sheet-in 有 zoom，各瀏覽器回報它尺寸的方式不一致，所以用一個不受 zoom 影響的標記量它的排版高度。 */
+const PRINT_K = 3;                                    // 與 CSS 的 zoom:3 一致
+function fitSheets(){
+  document.querySelectorAll('#tab-week .sheet').forEach(sh=>{
+    const inn=sh.firstElementChild;
+    inn.style.removeProperty('--fit'); sh.style.height=''; sh.style.paddingLeft='';
+    const box=sh.getBoundingClientRect();              // CSS 給的一頁大小
+    const mark=document.createElement('div'); sh.appendChild(mark);
+    const natural=(mark.getBoundingClientRect().top-box.top)/PRINT_K;   // 縮回後的實際高度
+    mark.remove();
+    if(!(natural>0)) return;
+    // 寬度：正常不會超出；只有瀏覽器仍把字撐大（例如 Chrome 自訂最小字級，zoom 擋不住）時才會發生，
+    // 這時整頁等比例縮小，寧可小一點也不要有欄位被切掉
+    const cw=inn.clientWidth||1, sw=Math.max(cw, inn.scrollWidth);
+    let fit=cw/sw;
+    if(natural*fit>box.height) fit=box.height/natural;
+    if(fit<0.999){
+      inn.style.setProperty('--fit', fit.toFixed(4));
+      sh.style.paddingLeft=Math.max(0,(box.width-sw/cw*fit*box.width)/2).toFixed(1)+'px';   // 縮小後水平置中
+    }
+    sh.style.height=Math.ceil(natural*Math.min(1,fit)+1)+'px';
+  });
+}
+function clearSheets(){
+  document.querySelectorAll('#tab-week .sheet').forEach(sh=>{
+    sh.style.height=''; sh.style.paddingLeft=''; sh.firstElementChild.style.removeProperty('--fit'); });
+}
+function exitPrint(){
+  if(!PRINT_STATE) return;
+  const t=PRINT_STATE.theme; PRINT_STATE=null;
+  if(t) document.documentElement.setAttribute('data-theme',t); else document.documentElement.removeAttribute('data-theme');
+  document.body.classList.remove('printing');
+  document.body.style.removeProperty('--pz');
+  clearSheets();
+  render();
+}
+
+function renderInfo(){
+  document.getElementById('verNow').textContent = `目前版本 ${APP_VERSION}（${APP_DATE}）`;
+  document.getElementById('verTable').innerHTML =
+    `<thead><tr><th class="l">版本</th><th class="l">日期</th><th class="l">變更內容</th></tr></thead><tbody>${
+      CHANGELOG.map(c=>`<tr><td class="l"><b>${esc(c[0])}</b></td><td class="l">${esc(c[1])}</td><td class="l" style="white-space:normal">${esc(c[2])}</td></tr>`).join('')}</tbody>`;
+  const cs = (M.checks||[]);
+  document.getElementById('checkTable').innerHTML = cs.length
+    ? `<thead><tr><th class="l">檢核項目</th><th class="l">實際值</th><th class="l">預期值</th><th class="l">狀態</th></tr></thead>
+       <tbody>${cs.map(c=>`<tr><td class="l">${esc(c.item)}</td><td class="l">${esc(c.actual)}</td>
+         <td class="l">${esc(c.expect)}</td><td class="l">${c.status==='OK'?'<span class="chip">OK</span>':'<span class="chip cold">'+esc(c.status)+'</span>'}</td></tr>`).join('')}</tbody>`
+    : '<tbody><tr><td class="l">此份資料是由瀏覽器直接讀取 xlsx 或備份檔匯入，未帶入來源檔的檢核表。</td></tr></tbody>';
+}
+
+/* ---------------- 可排序表格 ---------------- */
+function sortableTable(el, cols, rows, st, onRowClick){
+  // 列印版：np＝不印的欄；pl／pf＝列印用的欄名與格式（字放大後欄寬不夠，用較短的寫法）
+  if(PRINTING()) cols = cols.filter(c=>!c.np).map(c=>Object.assign({}, c, {label:c.pl||c.label, fmt:c.pf||c.fmt}));
+  const draw = () => {
+    const k=st.k, dir=st.dir;
+    const data = rows.slice().sort((a,b)=>{
+      const x=a[k], y=b[k];
+      if(x==null&&y==null) return 0;
+      if(x==null) return 1;            // 空值一律沉底，不管升冪或降冪
+      if(y==null) return -1;
+      return typeof x==='string' ? dir*x.localeCompare(y,'zh-Hant') : dir*(x-y);
+    });
+    el.innerHTML =
+      `<thead><tr>${cols.map(c=>
+        `<th class="sortable${c.l?' l':''}${c.c?' c':''}${c.k===k?' on':''}" data-k="${c.k}" tabindex="0" role="columnheader"`
+        +` aria-sort="${c.k===k?(dir>0?'ascending':'descending'):'none'}" title="點選或按 Enter 排序">`
+        +`${c.label}${c.k===k?`<span class="mark">${dir>0?'▲':'▼'}</span>`:''}</th>`).join('')}</tr></thead>`
+      + `<tbody>${ data.length
+        ? data.map(r=>`<tr${onRowClick?` style="cursor:pointer" data-bi="${r._bi}" tabindex="0" role="button"`
+            +` aria-label="檢視 ${esc(r.code||'')} ${esc(r.name||'')}"`:''}>`
+            + cols.map(c=>`<td class="${c.l?'l ':''}${c.c?'c ':''}${c.cls?c.cls(r):''}">${c.fmt(r)}</td>`).join('')
+            + `</tr>`).join('')
+        : `<tr><td class="l" colspan="${cols.length}">無資料</td></tr>` }</tbody>`;
+    const toggle = nk => {
+      if(st.k===nk) st.dir=-st.dir;
+      else { st.k=nk; st.dir = cols.find(c=>c.k===nk).asc ? 1 : -1; }
+      draw();
+      const th=el.querySelector(`th[data-k="${nk}"]`); if(th) th.focus();
+    };
+    el.querySelectorAll('th[data-k]').forEach(th=>{
+      th.onclick=()=>toggle(th.dataset.k);
+      th.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(th.dataset.k); } };
+    });
+    if(onRowClick) el.querySelectorAll('tbody tr[data-bi]').forEach(tr=>{
+      tr.onclick=()=>onRowClick(+tr.dataset.bi);
+      tr.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); onRowClick(+tr.dataset.bi); } };
+    });
+  };
+  draw();
+}
+
+/* ================= 匯出 ================= */
+function csvEscape(v){
+  if(v==null) return '';
+  // 真正的 number 直接輸出（負號安全）；字串只要以公式起始字元開頭就加前綴，
+  // 例如 -1+HYPERLINK(...) 這種看似負數的字串也會被擋下。
+  if(typeof v === 'number') return Number.isFinite(v) ? String(v) : '';
+  let s=String(v);
+  if(/^[\s=+\-@]/.test(s)) s="'"+s;          // \s 含 tab、換行與前導空白
+  return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+}
+function download(name, text, mime){
+  const blob = new Blob([text], {type:(mime||'text/csv')+';charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},0);
+}
+function toCSV(head, rows){
+  return '﻿' + [head].concat(rows).map(r=>r.map(csvEscape).join(',')).join('\r\n');
+}
+const mktName = mask => mask===3?'處所＋等殖':MK[mask===1?0:1];
+const n4 = v => v==null || !Number.isFinite(+v) ? '' : +(+v).toFixed(4);   // 匯出用：去掉浮點雜訊
+const stamp = () => (M.end||'').replace(/-/g,'');
+function exportCSV(kind){
+  const winTag = `回溯${S.win}日`;
+  if(kind==='daily'){
+    const d=DATES[S.date];
+    download(`公債_當日明細_${d}.csv`, toCSV(
+      ['交易日','券號','名稱','剩餘年限','存續期間','成交面額(億)','成交金額(億)','百元價','殖利率(%)','最低(%)','最高(%)',
+       '較上次成交(bp)','距上次成交(交易日)',`對曲線利差(bp,${winTag})`,'市場','處所筆數','期間成交日數','券別屬性'],
+      dailyRows().map(r=>[d,r.B.c,r.B.n,r.o.rem,r.o.dur,n4(r.o.face),n4(r.o.amt),n4(r.o.p),n4(r.o.y),n4(r.o.ylo),n4(r.o.yhi),
+        r.dy==null?'':+r.dy.toFixed(2), r.gap==null?'':r.gap, r.sp==null?'':+r.sp.toFixed(2),
+        r.mkt, r.o.otc, bondDays[r.o.bi], kindName(r.o.bi,S.date)])));
+  } else if(kind==='curve'){
+    const d=DATES[S.date], nodes=windowNodes(S.date);
+    download(`公債_曲線節點_${d}_${winTag}.csv`, toCSV(
+      ['基準日','節點來源日','券號','名稱','剩餘年限','殖利率(%)','成交面額(億)','是否當日成交'],
+      nodes.map(n=>[d,DATES[n.di],BONDS[n.bi].c,BONDS[n.bi].n,n.rem,n4(n.y),n4(n.face),n.di===S.date?'是':''])));
+  } else if(kind==='tenor'){
+    // 與畫面一致：只匯出目前選取的天期、目前的分組方式與期間
+    const ser=tenorSeries().filter(sr=>S.tenorPick.includes(sr.t)), x0=rangeStart();
+    if(!ser.length) return;
+    const rows=DATES.map((d,i)=>({d,i})).filter(o=>o.i>=x0).map(({d,i})=>{
+      const cells=ser.flatMap(s=>{ const p=s.pts.find(p=>p.x===i); return [p?n4(p.y):'', p?n4(p.v):0]; });
+      return [d].concat(cells);
+    });
+    const tag = S.tenorPick.length===TENORS.length ? '全天期' : S.tenorPick.map(t=>t+'Y').join('');
+    download(`公債_天期日序列_${S.tenorMode==='bench'?'指標券':'年限區間'}_${tag}_${S.range.toUpperCase()}_${stamp()}.csv`,
+      toCSV(['交易日'].concat(ser.flatMap(sr=>[`${sr.name}殖利率(%)`,`${sr.name}成交面額(億)`])), rows));
+  } else if(kind==='bond'){
+    if(S.bond<0 || !BONDS[S.bond]) return;
+    const B=BONDS[S.bond];
+    download(`公債_${B.c}_${stamp()}.csv`, toCSV(
+      ['交易日','券號','名稱','剩餘年限','成交面額(億)','百元價','殖利率(%)','最低(%)','最高(%)',
+       '較上次(bp)','間隔(交易日)',`對曲線(bp,${winTag})`,'市場'],
+      byBond[S.bond].map(o=>{
+        const pr=o.prev, sp=spreadOf(o);
+        return [DATES[o.di],B.c,B.n,o.rem,n4(o.face),n4(o.p),n4(o.y),n4(o.ylo),n4(o.yhi),
+          pr?+((o.y-pr.y)*100).toFixed(2):'', pr?o.di-pr.di:'', sp==null?'':+sp.toFixed(2), mktName(o.mask)];
+      })));
+  } else if(kind==='cold'){
+    download(`公債_冷門券清單_${stamp()}.csv`, toCSV(
+      ['券號','名稱','天期','發行日','發行日來源','剩餘年限','期間成交日數','最近成交日','最近成交面額(億)','最近殖利率(%)',
+       `對曲線(bp,${winTag})`,'期間總面額(億)'],
+      coldList().map(o=>{ const rec=byBond[o.i][byBond[o.i].length-1], sp=spreadOf(rec);
+        return [o.b.c,o.b.n,o.b.t!=null?o.b.t+'Y':'',o.b.iss||'',o.b.src==='off'?'官方':'推估',o.b.rem,bondDays[o.i],DATES[rec.di],
+                n4(rec.face),n4(rec.y),sp==null?'':+sp.toFixed(2),n4(faceOf(o.i))]; })));
+  } else if(kind==='weekBench' || kind==='weekCold'){
+    const W=WEEKS[S.week]; if(!W) return;
+    const tag=`${W.mon.replace(/-/g,'')}_${W.fri.replace(/-/g,'')}`;
+    if(kind==='weekBench'){
+      const w=S.week, P=w>0?WEEKS[w-1]:null;
+      download(`公債_週報_指標券變動_${tag}.csv`, toCSV(
+        ['週起日','週迄日','天期','指標券','名稱','本週最後成交日','殖利率(%)','本週無成交時的最近成交日','最近殖利率(%)',
+         '比較基準日','基準殖利率(%)','基準為發行前交易','較前一週(bp)','本週最低(%)','本週最高(%)','本週成交日數','本週面額(億)',
+         '前一週指標券','前一週最後成交日','前一週殖利率(%)','備註'],
+        weekBench(w).filter(r=>r.bi!=null).map(r=>[W.mon,W.fri,r.t+'Y',r.code,r.name,
+          r.cur?DATES[r.cur.di]:'', r.cur?n4(r.cur.y):'', r.stale?DATES[r.stale.di]:'', r.stale?n4(r.stale.y):'',
+          r.base?DATES[r.base.di]:'', r.base?n4(r.base.y):'', r.baseWI?'是':'', r.chg==null?'':+r.chg.toFixed(2),
+          n4(r.lo), n4(r.hi), r.days, n4(r.face),
+          r.prevBi!=null?BONDS[r.prevBi].c:'', r.prevRec?DATES[r.prevRec.di]:'', r.prevRec?n4(r.prevRec.y):'',
+          r.switched?`本週換券（前一週 ${BONDS[r.prevBi].c}）`:r.newBench?'本週起列為指標券':''])));
+    } else {
+      download(`公債_週報_非指標券成交_${tag}.csv`, toCSV(
+        ['週起日','週迄日','券號','名稱','年期','剩餘年限','本週成交日數','本週面額(億)','最後成交日','殖利率(%)',
+         `對曲線(bp,${winTag})`,'上次成交日','距上次成交(交易日)','較上次(bp)','久違成交'],
+        weekColdRows(W).sort((a,b)=>b.face-a.face).map(r=>[W.mon,W.fri,r.code,r.name,r.t!=null?r.t+'Y':'',r.rem,r.days,n4(r.face),
+          DATES[r.lastDi],n4(r.y),r.sp==null?'':+r.sp.toFixed(2),r.priorDi!=null?DATES[r.priorDi]:'',
+          r.gap==null?'':r.gap, r.chg==null?'':+r.chg.toFixed(2), r.long?'是':''])));
+    }
+  } else if(kind==='all'){
+    const rows=[];
+    for(let d=0;d<ND;d++) for(const o of byDate[d]){
+      const pr=o.prev, sp=spreadOf(o), B=BONDS[o.bi];
+      rows.push([DATES[d],B.c,B.n,o.rem,o.dur,n4(o.face),n4(o.amt),n4(o.p),n4(o.y),n4(o.ylo),n4(o.yhi),
+        pr?+((o.y-pr.y)*100).toFixed(2):'', pr?d-pr.di:'', sp==null?'':+sp.toFixed(2),
+        mktName(o.mask),o.otc,bondDays[o.bi],kindName(o.bi,d)]);
+    }
+    download(`公債_券日合併明細_${stamp()}.csv`, toCSV(
+      ['交易日','券號','名稱','剩餘年限','存續期間','成交面額(億)','成交金額(億)','百元價','殖利率(%)','最低(%)','最高(%)',
+       '較上次(bp)','間隔(交易日)',`對曲線(bp,${winTag})`,'市場','處所筆數','期間成交日數','券別屬性'], rows));
+  } else if(kind==='raw'){
+    download(`公債_原始明細_${stamp()}.csv`, toCSV(
+      ['交易日','券號','名稱','市場','剩餘年限','存續期間','成交面額(億)','成交金額(億)','百元價','殖利率(%)','最低(%)','最高(%)','處所筆數'],
+      RECS.filter(r=>S.market<0 || r[2]===S.market)      // 與畫面一致：套用目前的市場別篩選
+        .map(r=>[DATES[r[0]],BONDS[r[1]].c,BONDS[r[1]].n,MK[r[2]],r[9],r[10],r[3],r[4],r[8],r[5],r[6],r[7],r[11]])));
+  } else if(kind==='json'){
+    download(`公債資料備份_${stamp()}.json`, JSON.stringify(DATA), 'application/json');
+  }
+}
+
+/* ================= 匯入：xlsx 直讀 ================= */
+const ZIP = {entries:400, entry:80e6, total:200e6};   // 防 zip bomb：項目數、單一項目、解壓總量
+/* 只讀 zip 中央目錄，需要哪個檔案才解壓哪個（xlsx 只需 4 個檔），
+   並限制解壓後大小，避免惡意壓縮檔把記憶體吃光。*/
+async function openZip(buf){
+  if(typeof DecompressionStream==='undefined')
+    throw new Error('這個瀏覽器不支援內建解壓縮，請改用 Safari 16.4+／Chrome，或改用 build.py 重新產生 HTML');
+  const dv=new DataView(buf), u8=new Uint8Array(buf), dec=new TextDecoder();
+  let eocd=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-66000);i--) if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+  if(eocd<0) throw new Error('不是有效的 xlsx（找不到 zip 結尾）');
+  const n=dv.getUint16(eocd+10,true); let off=dv.getUint32(eocd+16,true);
+  if(n>ZIP.entries) throw new Error(`壓縮檔內有 ${n} 個項目，超過上限 ${ZIP.entries}`);
+  const index=new Map();
+  for(let k=0;k<n;k++){
+    if(off+46>u8.length || dv.getUint32(off,true)!==0x02014b50) throw new Error('zip 中央目錄損毀');
+    const method=dv.getUint16(off+10,true), csize=dv.getUint32(off+20,true), usize=dv.getUint32(off+24,true);
+    const nameLen=dv.getUint16(off+28,true), extraLen=dv.getUint16(off+30,true), cmtLen=dv.getUint16(off+32,true);
+    const lho=dv.getUint32(off+42,true);
+    const name=dec.decode(u8.subarray(off+46,off+46+nameLen));
+    index.set(name,{method,csize,usize,lho});
+    off+=46+nameLen+extraLen+cmtLen;
+  }
+  let used=0;
+  const read = async name => {
+    const e=index.get(name);
+    if(!e) return null;
+    if(e.usize>ZIP.entry) throw new Error(`${name} 解壓後 ${(e.usize/1e6).toFixed(0)} MB，超過單檔上限`);
+    if(used+e.usize>ZIP.total) throw new Error('解壓總量超過上限，已停止讀取');
+    // 檔案截斷或損毀時，讀檔頭前先檢查位置，不要讓 DataView 丟出看不懂的 RangeError
+    if(e.lho+30>u8.length || dv.getUint32(e.lho,true)!==0x04034b50) throw new Error('xlsx 檔案內容區塊損毀');
+    const lNameLen=dv.getUint16(e.lho+26,true), lExtra=dv.getUint16(e.lho+28,true);
+    const start=e.lho+30+lNameLen+lExtra;
+    if(start+e.csize>u8.length) throw new Error('xlsx 壓縮資料不完整（檔案可能被截斷）');
+    const raw=u8.subarray(start,start+e.csize);
+    let bytes;
+    if(e.method===0) bytes=raw;
+    else if(e.method===8){
+      // 一邊解壓一邊累計，超過上限立刻中止；不能等整包解完才檢查，
+      // 否則壓縮炸彈在檢查前就把記憶體吃光了（宣稱的 usize 也可能是假的）
+      const reader=new Blob([raw]).stream()
+        .pipeThrough(new DecompressionStream('deflate-raw')).getReader();
+      const parts=[]; let got=0;
+      for(;;){
+        const {value, done} = await reader.read();
+        if(done) break;
+        got += value.length;
+        if(got>ZIP.entry || used+got>ZIP.total){
+          await reader.cancel();
+          throw new Error(`${name} 解壓後超過容量上限，已中止讀取`);
+        }
+        parts.push(value);
+      }
+      bytes=new Uint8Array(got); let at=0;
+      for(const p of parts){ bytes.set(p,at); at+=p.length; }
+    } else throw new Error('不支援的壓縮方式：'+e.method);
+    if(bytes.length>ZIP.entry) throw new Error(`${name} 解壓後超過單檔上限`);
+    used+=bytes.length;
+    if(used>ZIP.total) throw new Error('解壓總量超過上限，已停止讀取');
+    return dec.decode(bytes);
+  };
+  return {read, has:name=>index.has(name), names:()=>[...index.keys()]};
+}
+const fromCode = cp => (cp>0 && cp<=0x10FFFF) ? String.fromCodePoint(cp) : '';   // 超出 Unicode 範圍的直接丟掉
+const unent = s => s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+  .replace(/&apos;/g,"'").replace(/&#(\d+);/g,(m,d)=>fromCode(+d))
+  .replace(/&#x([0-9a-fA-F]+);/g,(m,h)=>fromCode(parseInt(h,16))).replace(/&amp;/g,'&');
+/* xlsx 可能帶命名空間前綴（<x:row>），以下皆容許 */
+const tagRe = (name,flags='g') => new RegExp(`<(?:[A-Za-z0-9]+:)?${name}\\b[^>]*?(?:\\/>|>([\\s\\S]*?)<\\/(?:[A-Za-z0-9]+:)?${name}>)`,flags);
+const attr = (s,name) => { const m=s.match(new RegExp(`(?:[A-Za-z0-9]+:)?${name}="([^"]*)"`)); return m?unent(m[1]):null; };
+const innerText = s => s ? unent(s.replace(/<[^>]+>/g,'')) : '';
+function sharedStrings(xml){
+  if(!xml) return [];
+  return (xml.match(tagRe('si'))||[]).map(si=>
+    (si.match(tagRe('t'))||[]).map(innerText).join(''));
+}
+const colNum = ref => { let n=0; for(const ch of ref.replace(/\d+/g,'')) n=n*26+(ch.charCodeAt(0)-64); return n-1; };
+function sheetRows(xml, sst){
+  const rows=[];
+  for(const rowXml of xml.match(tagRe('row'))||[]){
+    const cells=[];
+    const re=tagRe('c');
+    let m;
+    while((m=re.exec(rowXml))){
+      const head = m[0].slice(0, m[0].indexOf('>')+1);
+      const ref = attr(head,'r'); if(!ref) continue;
+      const ci=colNum(ref), t=attr(head,'t'), body=m[1]||'';
+      const vTag=(body.match(tagRe('v','')) )||null;
+      const raw = vTag ? innerText(vTag[0]) : null;
+      let v=null;
+      if(t==='s') v = raw!=null ? sst[+raw] : null;
+      else if(t==='inlineStr') v = (body.match(tagRe('t'))||[]).map(innerText).join('');
+      else if(raw==null) v = null;
+      else v = (t==='str'||isNaN(+raw)) ? raw : +raw;
+      cells[ci]=v;
+    }
+    rows.push(cells);
+  }
+  return rows;
+}
+/* Excel 序號轉日期；Mac 舊檔可能用 1904 日期系統，差 1462 天（四年又一天）*/
+function excelDate(v, date1904=false){
+  if(typeof v==='string'){ const m=v.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?m[0]:null; }
+  if(typeof v!=='number') return null;
+  const ms = Math.round((v - 25569 + (date1904 ? 1462 : 0))*86400000);
+  return new Date(ms).toISOString().slice(0,10);
+}
+/* ── CSV 匯入 ────────────────────────────────────────────────
+   支援兩種欄位排列，都是「交易日 × 券別 × 市場」一列一筆、殖利率已是百分比：
+   1. update.py 累積的 data/records.csv：d,code,name,mk,dur,rem,plo,phi,pavg,yhi,ylo,yavg,amt,face,otc
+   2. 本工具「原始明細（分市場）」匯出的 CSV：交易日,券號,名稱,市場,…                        */
+function parseCsvText(text){
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);          // 去掉 Excel 的 BOM
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; }
+      else cell+=c;
+    } else if(c==='"') q=true;
+    else if(c===','){ row.push(cell); cell=''; }
+    else if(c==='\n'){ row.push(cell); rows.push(row); row=[]; cell=''; }
+    else if(c!=='\r') cell+=c;
+  }
+  if(cell!=='' || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(v=>String(v).trim()!==''));
+}
+const CSV_LAYOUTS = [
+  {name:'records.csv',
+   need:['d','code','name','mk','rem','yavg','face'],
+   map:{d:'d',code:'code',name:'name',mk:'mk',dur:'dur',rem:'rem',p:'pavg',
+        y:'yavg',ylo:'ylo',yhi:'yhi',amt:'amt',face:'face',otc:'otc'}},
+  {name:'原始明細匯出',
+   need:['交易日','券號','名稱','市場','剩餘年限','殖利率(%)','成交面額(億)'],
+   map:{d:'交易日',code:'券號',name:'名稱',mk:'市場',dur:'存續期間',rem:'剩餘年限',p:'百元價',
+        y:'殖利率(%)',ylo:'最低(%)',yhi:'最高(%)',amt:'成交金額(億)',face:'成交面額(億)',otc:'處所筆數'}},
+];
+function parseCsv(text, fileName){
+  const table = parseCsvText(text);
+  if(!table.length) throw new Error('CSV 是空的');
+  const head = table[0].map(h=>String(h).replace(/^'/,'').trim());
+  const layout = CSV_LAYOUTS.find(L=>L.need.every(k=>head.includes(k)));
+  if(!layout) throw new Error('CSV 欄位不符：需要 update.py 產生的 records.csv，或本工具匯出的「原始明細（分市場）」CSV');
+  const H={}; head.forEach((h,i)=>{ if(!(h in H)) H[h]=i; });
+  const cell = (r,key) => {
+    const col=layout.map[key];
+    if(col==null || H[col]==null) return '';
+    return String(r[H[col]] ?? '').replace(/^'/,'').trim();   // 拿掉防公式注入的前置單引號
+  };
+  const num = v => { const n=+String(v).replace(/,/g,''); return Number.isFinite(n)?n:NaN; };
+  const out=[]; let skipped=0, nonBond=0, badMk=0;
+  for(let i=1;i<table.length;i++){
+    const r=table[i];
+    const d=cell(r,'d'), code=cell(r,'code'), mk=cell(r,'mk');
+    if(!isISO(d)){ skipped++; continue; }
+    if(!BOND_CODE.test(code)){ nonBond++; continue; }
+    if(!MK_ALLOWED.includes(mk)){ badMk++; continue; }
+    const face=num(cell(r,'face')), y=num(cell(r,'y')), rem=num(cell(r,'rem'));
+    if(!(face>0) || !Number.isFinite(y) || !Number.isFinite(rem)){ skipped++; continue; }
+    const dur=num(cell(r,'dur')), p=num(cell(r,'p')), amt=num(cell(r,'amt'));
+    const ylo=num(cell(r,'ylo')), yhi=num(cell(r,'yhi')), otc=num(cell(r,'otc'));
+    out.push({d, code, name:cell(r,'name'), mk,
+      rem, dur:Number.isFinite(dur)?dur:0, p:Number.isFinite(p)?p:0,
+      y, ylo:Number.isFinite(ylo)?ylo:y, yhi:Number.isFinite(yhi)?yhi:y,
+      amt:Number.isFinite(amt)?amt:0, face, otc:Number.isFinite(otc)?Math.round(otc):0});
+  }
+  if(!out.length) throw new Error('CSV 沒有可用資料列'
+    + (nonBond||skipped||badMk ? `（略過非公債 ${nonBond} 筆、無效 ${skipped} 筆、市場別不明 ${badMk} 筆）` : ''));
+  if(out.length>LIMITS.recs) throw new Error(`資料列 ${out.length} 筆，超過上限 ${LIMITS.recs} 筆`);
+  const payload = payloadFromRows(out, fileName, 1);      // CSV 的殖利率已經是百分比，不用再乘
+  payload.meta.skipped = skipped; payload.meta.nonBond = nonBond; payload.meta.badMk = badMk;
+  return payload;
+}
+
+async function parseXlsx(buf, fileName){
+  const zip = await openZip(buf);
+  const wb = await zip.read('xl/workbook.xml'), rels = await zip.read('xl/_rels/workbook.xml.rels');
+  if(!wb) throw new Error('缺少 xl/workbook.xml，這不是 xlsx 檔');
+  const date1904 = /date1904="(1|true)"/.test(wb);      // Mac 舊版 Excel 的 1904 日期系統
+  const sheets = (wb.match(/<(?:[A-Za-z0-9]+:)?sheet\b[^>]*\/?>/g)||[])
+    .map(s=>({name:attr(s,'name'), rid:attr(s,'id')}))
+    .filter(s=>s.name);
+  const target = sheets.find(s=>s.name==='交易明細');
+  if(!target) throw new Error('找不到「交易明細」工作表（目前有：'+sheets.map(s=>s.name).join('、')+'）');
+  const relEl = (rels||'').match(/<Relationship\b[^>]*\/?>/g)||[];
+  const hit = relEl.find(s=>attr(s,'Id')===target.rid);
+  let path = hit ? attr(hit,'Target') : 'worksheets/sheet1.xml';
+  path = path.replace(/^\/?xl\//,''); if(!path.startsWith('worksheets')) path='worksheets/'+path.split('/').pop();
+  const xml = await zip.read('xl/'+path);
+  if(!xml) throw new Error('讀不到工作表內容：xl/'+path);
+  const rows = sheetRows(xml, sharedStrings(await zip.read('xl/sharedStrings.xml')));
+  const hi = rows.findIndex(r=>r && r.includes('交易日') && r.includes('債券代號'));
+  if(hi<0) throw new Error('「交易明細」找不到標題列（需含 交易日 / 債券代號）');
+  const H = {}; rows[hi].forEach((h,i)=>{ if(h!=null) H[String(h).trim()]=i; });
+  const need=['交易日','債券代號','債券名稱','剩餘年限（年）','成交面額（億元）','殖利率－加權平均','市場別'];
+  for(const k of need) if(!(k in H)) throw new Error('缺少必要欄位：'+k);
+  const out=[]; let skipped=0, nonBond=0;
+  const ok = v => typeof v==='number' && Number.isFinite(v);
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i]; if(!r||r[H['交易日']]==null) continue;
+    const d=excelDate(r[H['交易日']], date1904); if(!d) continue;
+    const code=String(r[H['債券代號']]??'').trim();
+    if(!BOND_CODE.test(code)){ nonBond++; continue; }          // 非中央政府公債（公司債等）不收
+    const row={d, code, name:String(r[H['債券名稱']]??'').trim(),
+      rem:+r[H['剩餘年限（年）']], dur:+r[H['存續期間（年）']]||0,
+      face:+r[H['成交面額（億元）']], amt:+(r[H['成交金額（億元）']]??0),
+      p:+(r[H['百元價－加權平均']]??0), y:+r[H['殖利率－加權平均']],
+      ylo:+(r[H['殖利率－最低']]??r[H['殖利率－加權平均']]), yhi:+(r[H['殖利率－最高']]??r[H['殖利率－加權平均']]),
+      otc:+(r[H['處所成交筆數']]??0)||0, mk:String(r[H['市場別']]??'').trim()};
+    // 單一壞列不該讓整份檔案匯入失敗：跳過並回報數量
+    if(!(row.face>0) || !ok(row.face) || !ok(row.y) || !ok(row.rem)){ skipped++; continue; }
+    if(!ok(row.amt)) row.amt=0;
+    if(!ok(row.p)) row.p=0;
+    if(!ok(row.ylo)) row.ylo=row.y;
+    if(!ok(row.yhi)) row.yhi=row.y;
+    out.push(row);
+  }
+  if(!out.length) throw new Error('「交易明細」沒有可用資料列'
+    + (nonBond||skipped ? `（略過非公債 ${nonBond} 筆、無效 ${skipped} 筆）` : ''));
+  if(out.length>LIMITS.recs) throw new Error(`資料列 ${out.length} 筆，超過上限 ${LIMITS.recs} 筆`);
+  const payload = payloadFromRows(out, fileName);
+  payload.meta.skipped = skipped; payload.meta.nonBond = nonBond;
+  return payload;
+}
+/* 年期與發行日：以財政部「中央公債標售概況表」的官方資料為準（ISSUES），
+   查不到（例如表列更新日之後才發行、或早於表格起始年度）才用券號＋剩餘年限推估。
+   ISSUES 只取自本頁內建資料，不會被匯入的檔案覆蓋。 */
+const BOND_CODE = /^A(\d{2})(\d)(\d{2})(R?)$/;
+const STD_TENORS = [2,3,5,7,10,15,20,30];        // 可辨識的標準年期（3／7／15 年不列為指標券）
+const ISSUES = (BUILTIN && BUILTIN.issues) || {};
+function bondProfile(code, day, rem){
+  const m = BOND_CODE.exec(code||'');
+  if(!m) return {t:null, iss:null, wi:0, cls:0, src:'est'};
+  const wi = m[4]?1:0, cls = +m[2];
+  const off = ISSUES[wi ? code.slice(0,-1) : code];      // 發行前交易沿用本券的發行資料
+  if(off && off.iss)
+    return {t:off.t, iss:off.iss, wi, cls, src:'off', reopen:off.re||''};
+  if(rem==null || !day) return {t:null, iss:null, wi, cls, src:'est'};
+  const yy=+m[1], roc = yy<50 ? yy+100 : yy, issueYear = 1911+roc;
+  const d = new Date(day+'T00:00:00Z');
+  const doy = (Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())
+              - Date.UTC(d.getUTCFullYear(),0,0))/86400000;
+  const mat = d.getUTCFullYear() + doy/365.25 + rem;
+  // span 必然等於年期加上發行當年已過的比例，所以取「不超過 span 的最大標準年期」；
+  // 取最接近的會把 115央債乙3（span 2.54）誤判成 3 年期。
+  const span = mat - issueYear;
+  const t = STD_TENORS.filter(x=>x<=span+0.15).pop() ?? STD_TENORS[0];
+  const iss = mat - t, y = Math.floor(iss);
+  const dd = new Date(Date.UTC(y,0,1));
+  dd.setUTCDate(dd.getUTCDate() + Math.max(0, Math.min(364, Math.round((iss-y)*365.25) - 1)));
+  return {t, iss:dd.toISOString().slice(0,10), wi, cls, src:'est'};
+}
+/* 舊版備份檔沒有這些欄位，載入時補算，指標券判定才不會整批變成冷門券 */
+function ensureProfiles(){
+  BONDS.forEach((b,i)=>{
+    if(b.t!=null && b.iss && b.src) return;
+    const a = byBond[i] && byBond[i].length ? byBond[i][byBond[i].length-1] : null;
+    const day = a ? DATES[a.di] : (DATES[b.last] || DATES[ND-1]);
+    const rem = a ? a.rem : b.rem;
+    Object.assign(b, bondProfile(b.c, day, rem));
+  });
+}
+
+function payloadFromRows(rows, fileName, yScale=100){   // yScale：來源殖利率換成百分比要乘的倍數
+  const markets=['營業處所','等殖成交系統'];
+  // 同一天、同一券、同一市場只留最後一筆（與 bonddata.py 的 merge 規則一致），
+  // 否則檔案裡若有重複列，面額會被重複累加。
+  const uniq = new Map();
+  for(const r of rows) uniq.set(r.d+'|'+r.code+'|'+r.mk, r);
+  const dupes = rows.length - uniq.size;
+  rows = [...uniq.values()];
+  const dates=[...new Set(rows.map(r=>r.d))].sort();
+  const di=new Map(dates.map((d,i)=>[d,i]));
+  const codes=[...new Set(rows.map(r=>r.code))].sort();
+  const bi=new Map(codes.map((c,i)=>[c,i]));
+  const bonds=codes.map(c=>({c,n:'',rem:0,dur:0,days:0,face:0,first:0,last:0,t:null,iss:null,wi:0,cls:0}));
+  const lastRow=new Map();
+  const seen=codes.map(()=>new Set());
+  const recs=[];
+  for(const r of rows){
+    const b=bonds[bi.get(r.code)];
+    b.n=r.name||b.n; b.rem=r.rem; b.dur=r.dur; b.face+=r.face;
+    seen[bi.get(r.code)].add(r.d);
+    const lr=lastRow.get(r.code); if(!lr || r.d>=lr.d) lastRow.set(r.code,r);
+    const mk=markets.indexOf(r.mk);
+    if(mk<0) throw new Error(`第 ${recs.length+1} 筆的市場別「${r.mk}」不是營業處所或等殖成交系統`);
+    recs.push([di.get(r.d), bi.get(r.code), mk, +r.face.toFixed(4), +r.amt.toFixed(4),
+      +(r.y*yScale).toFixed(6), +(r.ylo*yScale).toFixed(6), +(r.yhi*yScale).toFixed(6),
+      +r.p.toFixed(4), +r.rem.toFixed(3), +r.dur.toFixed(3), r.otc]);
+  }
+  bonds.forEach((b,i)=>{
+    b.days=seen[i].size;
+    const ds=[...seen[i]].sort();
+    b.first=di.get(ds[0]); b.last=di.get(ds[ds.length-1]);
+    b.face=+b.face.toFixed(3);
+    const lr=lastRow.get(b.c);
+    Object.assign(b, bondProfile(b.c, lr?lr.d:null, lr?lr.rem:b.rem));
+  });
+  const totFace=rows.reduce((a,r)=>a+r.face,0);
+  return {meta:{start:dates[0], end:dates[dates.length-1],
+      generated:localStamp(),
+      src:fileName, rows:recs.length, totFace:+totFace.toFixed(3),
+      totAmt:+rows.reduce((a,r)=>a+r.amt,0).toFixed(3),
+      totOtc:rows.reduce((a,r)=>a+r.otc,0),
+      wy:+(rows.reduce((a,r)=>a+r.y*r.face,0)/totFace*yScale).toFixed(4),
+      nDays:dates.length, nBonds:bonds.length, checks:[], checkFail:0, imported:true, dupes},
+    dates, bonds, recs, markets};
+}
+const MK_ALLOWED = ['營業處所','等殖成交系統'];
+const LIMITS = {dates:20000, bonds:5000, recs:400000, file:{json:25e6, xlsx:40e6, csv:40e6}};
+const RANGE = {face:[0,1e6], amt:[0,1e6], y:[-50,100], p:[0,1e5], rem:[0,120], dur:[0,120], otc:[0,1e7]};
+const inR = (v,r) => v>=r[0] && v<=r[1];
+const clean = (v,max=60) => String(v==null?'':v).replace(/[<>&"'`\\]/g,'').replace(/[\u0000-\u001f]/g,'').slice(0,max);
+/* 格式對還不夠，2026-02-31、2026-99-99 這種不存在的日期會讓 Date.parse 變 NaN，
+   進而毀掉剩餘年限推算與參考曲線，所以解析後要能原樣還原才算數。 */
+function isISO(d){
+  if(typeof d!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  const [y,m,day]=d.split('-').map(Number);
+  const t=new Date(Date.UTC(y,m-1,day));
+  return t.getUTCFullYear()===y && t.getUTCMonth()===m-1 && t.getUTCDate()===day;
+}
+const finite = v => typeof v==='number' && Number.isFinite(v);
+/* 匯入檔宣稱的統計、檢核、來源一律不採信，全部由 dates／bonds／recs 重算，
+   並強制標記為瀏覽器匯入，避免有人做一份「檢核 OK、來源是櫃買」的假檔。 */
+function recomputeMeta(p, srcLabel){
+  let face=0, amt=0, otc=0, wsum=0;
+  const mkCount = p.markets.map(()=>0);
+  for(const r of p.recs){ face+=r[3]; amt+=r[4]; otc+=r[11]; wsum+=r[5]*r[3]; mkCount[r[2]]++; }
+  const round=(v,n)=>+(+v).toFixed(n);
+  p.meta = {
+    start:p.dates[0], end:p.dates[p.dates.length-1],
+    generated:localStamp(),
+    src:clean(srcLabel,80), rows:p.recs.length,
+    totFace:round(face,3), totAmt:round(amt,3), totOtc:Math.round(otc),
+    wy: face>0 ? round(wsum/face,4) : 0,
+    nDays:p.dates.length, nBonds:p.bonds.length,
+    imported:true, checkFail:0,
+    checks:[
+      {item:'資料列數', actual:String(p.recs.length), expect:String(p.recs.length), status:'OK'},
+      {item:'涵蓋交易日數', actual:String(p.dates.length), expect:String(p.dates.length), status:'OK'},
+      {item:'最新資料日', actual:p.dates[p.dates.length-1], expect:p.dates[p.dates.length-1], status:'OK'},
+      ...p.markets.map((m,i)=>({item:m+'列數', actual:String(mkCount[i]), expect:'—', status:'OK'})),
+      {item:'成交面額合計（億元）', actual:round(face,2).toLocaleString('zh-TW'), expect:'—', status:'OK'},
+      {item:'統計來源', actual:'由本頁依匯入資料重算', expect:'—', status:'OK'},
+    ]};
+  return p;
+}
+/* 匯入檔 bonds 裡的衍生欄位（剩餘年限、面額、成交日數、年期、發行日、發行前旗標…）
+   一律不採信，全部由 recs 重算，否則可以把一檔老券偽造成「30 年期、發行前、面額 999999 億」。*/
+function normalizeBonds(p){
+  const seen=new Set();
+  for(const b of p.bonds){
+    if(!BOND_CODE.test(b.c) || seen.has(b.c)) return false;   // 券號要合規且不重複
+    seen.add(b.c);
+  }
+  const agg = p.bonds.map(()=>({face:0, days:new Set(), first:Infinity, last:-1, rem:0, dur:0}));
+  for(const r of p.recs){
+    const a=agg[r[1]];
+    a.face+=r[3]; a.days.add(r[0]);
+    a.first=Math.min(a.first,r[0]);
+    if(r[0]>=a.last){ a.last=r[0]; a.rem=r[9]; a.dur=r[10]; }
+  }
+  for(let i=0;i<p.bonds.length;i++){
+    const a=agg[i], b=p.bonds[i];
+    if(a.last<0) return false;                                // 有券卻沒有任何成交紀錄 → 不一致
+    b.face=+a.face.toFixed(3); b.days=a.days.size;
+    b.first=a.first; b.last=a.last; b.rem=a.rem; b.dur=a.dur;
+    if(!inR(b.face,RANGE.face) || !inR(b.rem,RANGE.rem) || !inR(b.dur,RANGE.dur)) return false;
+    Object.assign(b, bondProfile(b.c, p.dates[a.last], a.rem));   // 年期／發行日／發行前／類別一併重算
+    if(b.iss && !isISO(b.iss)) return false;
+  }
+  return true;
+}
+const validImported = p => validPayload(p) && normalizeBonds(p);
+
+/* 匯入的檔案一律當成不可信：驗證結構與數值，字串全部清掉標記符號後才進畫面。
+   驗證不過就整份退回，不會半套載入。 */
+function validPayload(p, strict){
+  try{
+    if(!p || typeof p!=='object' || !p.meta || typeof p.meta!=='object') return false;
+    if(!Array.isArray(p.dates) || !Array.isArray(p.bonds) || !Array.isArray(p.recs) || !Array.isArray(p.markets)) return false;
+    if(!p.dates.length || !p.recs.length || !p.bonds.length) return false;
+    if(p.dates.length>LIMITS.dates || p.bonds.length>LIMITS.bonds || p.recs.length>LIMITS.recs) return false;
+    if(!p.dates.every(isISO)) return false;
+    for(let i=1;i<p.dates.length;i++) if(p.dates[i]<=p.dates[i-1]) return false;   // 需遞增且不重複
+    // 程式各處固定假設索引 0＝營業處所、1＝等殖成交系統，缺少／重複／順序相反都要退回
+    if(p.markets.length!==MK_ALLOWED.length || !p.markets.every((m,i)=>m===MK_ALLOWED[i])) return false;
+    for(const b of p.bonds){
+      if(!b || typeof b!=='object' || typeof b.c!=='string') return false;
+      b.c=clean(b.c,12); b.n=clean(b.n,24);
+      if(b.iss!=null && !isISO(b.iss)) b.iss=null;
+      if(b.t!=null && !finite(b.t)) b.t=null;
+      b.wi = b.wi?1:0; b.cls = finite(b.cls)?b.cls:0;
+      for(const k of ['rem','dur','face']) if(!finite(b[k])) b[k]=0;
+      for(const k of ['days','first','last'])
+        if(!Number.isInteger(b[k]) || b[k]<0 || (k!=='days' && b[k]>=p.dates.length)) b[k]=0;
+    }
+    for(const r of p.recs){
+      if(!Array.isArray(r) || r.length<12) return false;
+      if(!Number.isInteger(r[0]) || r[0]<0 || r[0]>=p.dates.length) return false;
+      if(!Number.isInteger(r[1]) || r[1]<0 || r[1]>=p.bonds.length) return false;
+      if(!Number.isInteger(r[2]) || r[2]<0 || r[2]>=p.markets.length) return false;
+      for(let i=3;i<12;i++) if(!finite(r[i])) return false;
+      // 數值要落在公債日檔可能出現的範圍，1e308 這種會讓加總變成 Infinity 的一律退回
+      if(!(r[3]>0) || !inR(r[3],RANGE.face) || !inR(r[4],RANGE.amt)) return false;
+      if(![r[5],r[6],r[7]].every(v=>inR(v,RANGE.y))) return false;
+      if(!inR(r[8],RANGE.p) || !inR(r[9],RANGE.rem) || !inR(r[10],RANGE.dur) || !inR(r[11],RANGE.otc)) return false;
+    }
+    return true;
+  }catch(e){ return false; }
+}
+async function importFile(file){
+  const msg=document.getElementById('impMsg');
+  msg.innerHTML='讀取中…';
+  try{
+    let payload;
+    const mb = n => (n/1e6).toFixed(1)+' MB';
+    if(/\.json$/i.test(file.name)){
+      if(file.size>LIMITS.file.json) throw new Error(`檔案 ${mb(file.size)} 超過上限 ${mb(LIMITS.file.json)}`);
+      payload = JSON.parse(await file.text());
+    } else if(/\.xlsx$/i.test(file.name)){
+      if(file.size>LIMITS.file.xlsx) throw new Error(`檔案 ${mb(file.size)} 超過上限 ${mb(LIMITS.file.xlsx)}`);
+      payload = await parseXlsx(await file.arrayBuffer(), file.name);
+    } else if(/\.csv$/i.test(file.name)){
+      if(file.size>LIMITS.file.csv) throw new Error(`檔案 ${mb(file.size)} 超過上限 ${mb(LIMITS.file.csv)}`);
+      payload = parseCsv(await file.text(), file.name);
+    } else throw new Error('只支援 .csv、.xlsx 或 .json');
+    // 兩種格式走同一道嚴格驗證，統計與檢核一律重算
+    if(!validImported(payload)) throw new Error('資料內容未通過驗證（結構、索引、券號或數值範圍不符）');
+    const note = {dupes:payload.meta&&payload.meta.dupes|0,
+                  skipped:payload.meta&&payload.meta.skipped|0,
+                  nonBond:payload.meta&&payload.meta.nonBond|0,
+                  badMk:payload.meta&&payload.meta.badMk|0};
+    recomputeMeta(payload, file.name);
+    loadData(payload); render();
+    if(!document.getElementById('impRemember').checked) LS.del();   // 取消「記住」就把舊的清掉
+    if(document.getElementById('impRemember').checked){
+      if(!LS.set(JSON.stringify(payload))){
+        msg.innerHTML='<span class="bad">資料已載入，但無法寫入瀏覽器儲存（可能是容量上限或瀏覽器限制），這次不會被記住。</span>';
+        return;
+      }
+    }
+    const notes=[];
+    if(note.dupes) notes.push(`重複列 ${note.dupes} 筆（同日同券同市場，以最後一筆為準）`);
+    if(note.skipped) notes.push(`無效資料 ${note.skipped} 筆`);
+    if(note.nonBond) notes.push(`非中央政府公債 ${note.nonBond} 筆`);
+    if(note.badMk) notes.push(`市場別不明 ${note.badMk} 筆`);
+    msg.innerHTML=`<span class="ok">已載入 ${esc(file.name)}：${payload.meta.start} ～ ${payload.meta.end}，`
+      +`${payload.meta.nDays} 個交易日、${payload.meta.nBonds} 檔券、${payload.meta.rows} 筆明細。</span>`
+      + (notes.length ? `<br><span class="sub">已略過：${notes.join('；')}</span>` : '');
+  }catch(err){
+    msg.innerHTML=`<span class="bad">匯入失敗：${esc(err.message)}</span>`;
+  }
+}
+
+/* ---------------- 版面控制 ---------------- */
+function setTab(t){
+  S.tab=t;
+  document.body.dataset.section=t;          // 章節色（頁籤漸層、banner、卡片頂線）
+  document.querySelectorAll('.tab').forEach(b=>{
+    const on = b.dataset.tab===t;
+    b.setAttribute('aria-selected', on);
+    b.tabIndex = on ? 0 : -1;                 // 只有目前分頁進入 Tab 順序
+  });
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('hidden', s.id!=='tab-'+t));
+  render();
+}
+function render(){
+  document.getElementById('coldCount').textContent =
+    `最新交易日：指標券 ${benchSet(ND-1).size} 檔、非指標券（冷門）${BONDS.filter((b,i)=>isCold(i)).length} 檔`;
+  if(S.tab==='daily') renderDaily();
+  else if(S.tab==='tenor') renderTenor();
+  else if(S.tab==='bond'){ bondOptions(document.getElementById('bSearch').value); renderBond(); }
+  else if(S.tab==='cold') renderCold();
+  else if(S.tab==='week') renderWeek();
+  else if(S.tab==='info') renderInfo();
+}
+/* ── 日期按鈕 ＋ 小月曆 ─────────────────────────────────
+   下拉選單在四百多個交易日下要滑很久；月曆一眼看得到哪天有成交。
+   深色粗體＝當日（依目前市場別）有公債成交；斜紋＝有交易日檔但無成交；淡色＝週末、休市或不在資料範圍。 */
+let DATE_IDX = new Map();
+const CAL = {y:0, m:0, open:false};
+function refreshDatePicker(){
+  const dp=document.getElementById('dPick');
+  const empty = !(byDate[S.date] && byDate[S.date].length);
+  dp.innerHTML = esc(DATES[S.date]) + (empty ? ' <span class="chip cold">無成交</span>' : '');
+  if(CAL.open) renderCalendar();
+}
+function calRange(){                                  // 可瀏覽的月份範圍
+  const a=DATES[0], b=DATES[ND-1];
+  return {y0:+a.slice(0,4), m0:+a.slice(5,7), y1:+b.slice(0,4), m1:+b.slice(5,7)};
+}
+function calClamp(){
+  const r=calRange();
+  if(CAL.y<r.y0 || (CAL.y===r.y0 && CAL.m<r.m0)){ CAL.y=r.y0; CAL.m=r.m0; }
+  if(CAL.y>r.y1 || (CAL.y===r.y1 && CAL.m>r.m1)){ CAL.y=r.y1; CAL.m=r.m1; }
+}
+function calShift(months){ CAL.m+=months; while(CAL.m>12){CAL.m-=12;CAL.y++;} while(CAL.m<1){CAL.m+=12;CAL.y--;} calClamp(); renderCalendar(); }
+function renderCalendar(){
+  const pop=document.getElementById('calPop');
+  const r=calRange(), y=CAL.y, m=CAL.m;
+  const first=new Date(Date.UTC(y,m-1,1)), dow=first.getUTCDay(), nDays=new Date(Date.UTC(y,m,0)).getUTCDate();
+  const today=localToday();                 // toISOString 是 UTC，台灣 0～8 點會標成前一天
+  const atStart = y===r.y0 && m===r.m0, atEnd = y===r.y1 && m===r.m1;
+  let traded=0, listed=0;
+  const cells=[];
+  for(let i=0;i<dow;i++) cells.push('<span></span>');
+  for(let d=1; d<=nDays; d++){
+    const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const idx=DATE_IDX.get(ds);
+    let cls='cd', attrs='';
+    if(idx==null){ cls+=' off'; attrs=' disabled'; }
+    else { listed++;
+      if(byDate[idx] && byDate[idx].length){ cls+=' has'; traded++; } else cls+=' none';
+      attrs=` data-i="${idx}" tabindex="-1" aria-label="${ds}${byDate[idx]&&byDate[idx].length?'，有 '+byDate[idx].length+' 檔成交':'，無成交'}"`;
+      if(idx===S.date) cls+=' sel';
+    }
+    if(ds===today) cls+=' today';
+    cells.push(`<button class="${cls}"${attrs}>${d}</button>`);
+  }
+  pop.innerHTML = `
+    <div class="cal-head">
+      <div class="cal-nav">
+        <button class="btn" data-cal="-12" title="前一年"${y<=r.y0?' disabled':''}>«</button>
+        <button class="btn" data-cal="-1" title="前一月"${atStart?' disabled':''}>‹</button>
+      </div>
+      <div class="cal-title">${y} 年 ${m} 月<small>${traded} 個成交日${listed>traded?`・${listed-traded} 日無成交`:''}</small></div>
+      <div class="cal-nav">
+        <button class="btn" data-cal="1" title="後一月"${atEnd?' disabled':''}>›</button>
+        <button class="btn" data-cal="12" title="後一年"${y>=r.y1?' disabled':''}>»</button>
+      </div>
+    </div>
+    <div class="cal-grid">${['日','一','二','三','四','五','六'].map(w=>`<div class="cal-dow">${w}</div>`).join('')}${cells.join('')}</div>
+    <div class="cal-legend"><span><i class="has"></i>有成交</span><span><i class="none"></i>有日檔但無公債成交</span><span><i class="off"></i>休市／無資料</span></div>`;
+  pop.querySelectorAll('[data-cal]').forEach(b=>b.onclick=()=>calShift(+b.dataset.cal));
+  pop.querySelectorAll('.cd[data-i]').forEach(b=>b.onclick=()=>{ S.date=+b.dataset.i; closeCalendar(); renderDaily(); });
+}
+function openCalendar(){
+  CAL.y=+DATES[S.date].slice(0,4); CAL.m=+DATES[S.date].slice(5,7); CAL.open=true;
+  const pop=document.getElementById('calPop'); pop.hidden=false;
+  const card=pop.closest('.card'); if(card) card.classList.add('raise');
+  document.getElementById('dPick').setAttribute('aria-expanded','true');
+  renderCalendar();
+  const sel=pop.querySelector('.cd.sel') || pop.querySelector('.cd[data-i]');
+  if(sel){ sel.tabIndex=0; sel.focus(); }
+}
+function closeCalendar(){
+  CAL.open=false;
+  const pop=document.getElementById('calPop'); pop.hidden=true;
+  const card=pop.closest('.card'); if(card) card.classList.remove('raise');
+  document.getElementById('dPick').setAttribute('aria-expanded','false');
+  document.getElementById('dPick').focus();
+}
+function calKey(e){                                    // 月曆內的鍵盤操作
+  const pop=document.getElementById('calPop');
+  if(e.key==='Escape'){ e.preventDefault(); closeCalendar(); return; }
+  if(e.key==='PageUp'){ e.preventDefault(); calShift(e.shiftKey?-12:-1); return; }
+  if(e.key==='PageDown'){ e.preventDefault(); calShift(e.shiftKey?12:1); return; }
+  const step={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7}[e.key];
+  if(!step) return;
+  e.preventDefault();
+  const all=[...pop.querySelectorAll('.cd')];
+  const cur=all.indexOf(document.activeElement);
+  let j = cur<0 ? all.findIndex(b=>b.classList.contains('sel')) : cur+step;
+  while(j>=0 && j<all.length && all[j].disabled) j+=Math.sign(step);   // 跳過休市日
+  if(j<0 || j>=all.length){ calShift(step<0?-1:1); const n=[...pop.querySelectorAll('.cd[data-i]')]; const t=step<0?n[n.length-1]:n[0]; if(t){t.tabIndex=0;t.focus();} return; }
+  all.forEach(b=>b.tabIndex=-1); all[j].tabIndex=0; all[j].focus();
+}
+function loadData(payload){
+  DATA=payload; M=payload.meta; DATES=payload.dates; BONDS=payload.bonds; RECS=payload.recs;
+  MK=payload.markets; NB=BONDS.length; ND=DATES.length;
+  S.date=ND-1; S.bond=0;
+  document.getElementById('metaLine').innerHTML =
+    `${M.start} ～ ${M.end}｜${M.nDays} 個有成交交易日｜${M.nBonds} 檔券｜總成交面額 ${fmt(M.totFace,0)} 億元`
+    + `｜來源 ${esc(M.src||'—')}｜${M.imported?'載入於':'產生於'} ${esc(M.generated||'—')}｜程式 ${APP_VERSION}`
+    + (M.imported?' ｜<span class="chip">瀏覽器匯入</span>':'')
+    + (M.checkFail?' ｜<span class="chip cold">來源檢核有異常</span>':'');
+  DATE_IDX = new Map(DATES.map((d,i)=>[d,i]));
+  buildWeeks(); S.week = defaultWeek();
+  rebuild();                 // 先算出 byDate，日期按鈕與月曆的「無成交」標記才會正確
+  ensureProfiles();
+  buildBenchmarks();
+  refreshDatePicker();
+}
+function init(){
+  document.getElementById('appVer').textContent = ' · '+APP_VERSION;
+  const dp=document.getElementById('dPick');
+  dp.onclick=()=>{ CAL.open ? closeCalendar() : openCalendar(); };
+  document.getElementById('calPop').addEventListener('keydown', calKey);
+  addEventListener('mousedown', e=>{ if(CAL.open && !e.target.closest('.calwrap')) closeCalendar(); });
+  document.getElementById('dPrev').onclick=()=>stepDate(-1);
+  document.getElementById('dNext').onclick=()=>stepDate(1);
+  document.getElementById('dLast').onclick=()=>{ S.date=lastTradedDate(); renderDaily(); };
+  document.getElementById('fMarket').onchange=e=>{
+    S.market=+e.target.value; rebuild();
+    if(!byDate[S.date].length) S.date=lastTradedDate();   // 換市場別後別停在沒成交的日子
+    refreshDatePicker(); render(); };
+  document.getElementById('fWin').onchange=e=>{
+    S.win=+e.target.value; curveCache.clear(); spreadCache.clear(); levelCache.clear(); render(); };
+  document.getElementById('fCold').onchange=e=>{S.listMax=+e.target.value; render();};
+  document.getElementById('fXScale').onchange=e=>{S.xscale=e.target.value; renderDaily();};
+  document.querySelectorAll('#tenorRange [data-range]').forEach(b=>
+    b.onclick=()=>{ S.range=b.dataset.range; renderTenor(); });
+  document.querySelectorAll('#tenorPick [data-tenor]').forEach(b=>b.onclick=()=>{
+    const t=b.dataset.tenor;
+    if(t==='all') S.tenorPick = TENORS.map(x=>x.t);
+    else {
+      const n=+t;
+      S.tenorPick = S.tenorPick.includes(n) ? S.tenorPick.filter(x=>x!==n)
+                                            : TENORS.map(x=>x.t).filter(x=>S.tenorPick.includes(x)||x===n);
+    }
+    renderTenor();
+  });
+  document.querySelectorAll('#tenorMode [data-mode]').forEach(b=>
+    b.onclick=()=>{ S.tenorMode=b.dataset.mode; renderTenor(); });
+  document.getElementById('wPrev').onclick=()=>{ if(S.week>0){ S.week--; renderWeek(); } };
+  document.getElementById('wNext').onclick=()=>{ if(S.week<WEEKS.length-1){ S.week++; renderWeek(); } };
+  document.getElementById('wLast').onclick=()=>{ S.week=defaultWeek(); renderWeek(); };
+  document.getElementById('wPrint').onclick=()=>{ enterPrint(); print(); };
+  addEventListener('beforeprint', enterPrint);
+  addEventListener('afterprint', exitPrint);
+  document.getElementById('bPick').onchange=e=>{S.bond=+e.target.value; renderBond();};
+  document.getElementById('bSearch').oninput=e=>{bondOptions(e.target.value); renderBond();};
+  document.getElementById('hmSort').onchange=e=>{S.hmSort=e.target.value; heatmap(document.getElementById('hmChart'));};
+  document.getElementById('hmColdOnly').onchange=e=>{S.hmColdOnly=e.target.checked; heatmap(document.getElementById('hmChart'));};
+  const tabs=[...document.querySelectorAll('.tab')];
+  tabs.forEach((b,i)=>{
+    b.tabIndex = b.getAttribute('aria-selected')==='true' ? 0 : -1;   // roving tabindex
+    b.onclick=()=>setTab(b.dataset.tab);
+    b.onkeydown=e=>{
+      // 桌機導覽列是直式、窄螢幕是橫式，上下左右都可切換
+      const j = (e.key==='ArrowDown'||e.key==='ArrowRight') ? i+1 : (e.key==='ArrowUp'||e.key==='ArrowLeft') ? i-1
+              : e.key==='Home' ? 0 : e.key==='End' ? tabs.length-1 : -1;
+      if(j<0) return;
+      e.preventDefault();
+      const t=tabs[(j+tabs.length)%tabs.length];
+      t.focus(); setTab(t.dataset.tab);
+    };
+  });
+  document.querySelectorAll('[data-export]').forEach(b=>b.onclick=()=>exportCSV(b.dataset.export));
+  document.getElementById('themeBtn').onclick=()=>{
+    const cur=document.documentElement.getAttribute('data-theme');
+    const next = cur==='dark' ? 'light' : cur==='light' ? 'dark'
+      : (matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark');
+    document.documentElement.setAttribute('data-theme',next);
+    try{ localStorage.setItem('bondmkt.theme', next); }catch(e){}   // 記住偏好，下次開啟沿用
+    render();
+  };
+  if(ADMIN){
+    const fi=document.getElementById('impFile');
+    document.getElementById('impBtn').onclick=()=>fi.click();
+    fi.onchange=e=>{ if(e.target.files[0]) importFile(e.target.files[0]); fi.value=''; };
+    document.getElementById('resetBtn').onclick=()=>{
+      LS.del(); loadData(JSON.parse(JSON.stringify(BUILTIN))); render();
+      document.getElementById('impMsg').innerHTML='<span class="ok">已還原為 HTML 內建資料。</span>';
+    };
+    const drop=document.getElementById('drop');
+    addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('on');});
+    addEventListener('dragleave',e=>{ if(e.relatedTarget===null) drop.classList.remove('on'); });
+    addEventListener('drop',e=>{ e.preventDefault(); drop.classList.remove('on');
+      const f=e.dataTransfer.files[0]; if(f){ setTab('io'); importFile(f); } });
+  }
+  addEventListener('keydown',e=>{
+    if(S.tab!=='daily' || CAL.open) return;
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    // 焦點在按鈕、選單、可聚焦的表格列上時，左右鍵歸那些元件用，不要偷換日期
+    const t=e.target;
+    if(t && t!==document.body && t.closest && t.closest('button,select,input,textarea,a,[tabindex]')) return;
+    if(e.key==='ArrowLeft') stepDate(-1);
+    if(e.key==='ArrowRight') stepDate(1);
+  });
+  let t; addEventListener('resize',()=>{ if(PRINT_STATE) return; clearTimeout(t); t=setTimeout(render,150);});
+  try{ const th=localStorage.getItem('bondmkt.theme');
+    if(th==='dark'||th==='light') document.documentElement.setAttribute('data-theme',th); }catch(e){}
+  let boot=BUILTIN, note='';
+  if(ADMIN) try{ const saved=LS.get();
+    if(saved){
+      let p=null;
+      try{ p=JSON.parse(saved); }catch(e){ p=null; }
+      if(!p || !validImported(p)){        // 壞掉或不合規的備份直接刪除，不要每次開檔都卡在同一份
+        LS.del();
+        note='先前記住的資料已損毀或不符規格，已刪除並改用 HTML 內建資料。';
+        p=null;
+      }
+      if(p){
+        recomputeMeta(p, (p.meta && p.meta.src) || '先前匯入的資料');
+        if(BUILTIN && BUILTIN.meta && BUILTIN.meta.end > p.meta.end){
+          LS.del();
+          note=`HTML 內建資料（至 ${BUILTIN.meta.end}）比先前記住的（至 ${p.meta.end}）新，已改用內建資料。`;
+        } else boot=p;
+      } } }catch(e){}
+  if(note) document.getElementById('impMsg').innerHTML='<span class="ok">'+note+'</span>';
+  loadData(boot);
+  setTab('daily');            // setTab 會 render，loadData 不再重畫一次
+  const hm=location.hash.match(/^#print-week(?::(\d{4}-\d{2}-\d{2}))?$/);   // 例：#print-week:2026-09-07 直接開週報列印版
+  if(hm){ setTab('week'); if(hm[1]){ const k=WEEKS.findIndex(W=>W.mon===hm[1]); if(k>=0) S.week=k; } enterPrint(); }
+}
+init();
+</script>
+</body>
+</html>
