@@ -53,6 +53,8 @@
 - 靜態網站沒有伺服器端驗證，保護全靠加密強度，密碼請用 12 字以上；忘記密碼直接換一組即可（舊的「記住」會自動失效）。
 - 包裝頁（`build_site.py` 的 `WRAP_JS`）注意：script 必須整段包在函式裡（`document.open` 後全域物件不變，頂層 `const` 會跟原頁撞名）；換頁要等 `load` 之後（解析器還在跑時 `document.open` 會被忽略，原頁被塞進 body，標題與 CSP 失效）；包裝頁 CSP 要同時放行原頁 script 的 hash。
 
+- **GitHub 排程會嚴重延遲**（2026-11-04～05 實測：17:00 的排程隔天凌晨 1 點左右才跑）。所以主要由本機 `~/scripts/bondmarket_update.sh`（launchd 週一至五 17:00）每次嘗試前先 `gh workflow run update.yml` 觸發、等跑完再 `git pull`；沒抓到當天資料會在 17:30、18:00、19:00 再觸發。GitHub 的 cron 留著當備援（本機沒開機時，半夜也會補上）。
+- workflow 的 checkout 指定 `ref: main`：排隊的 run 要拿最新版本，否則前一個 run 寫回資料後，這個 run push 會被拒。
 - 補抓特定期間：Actions 頁面手動執行「每日更新並發布」，`dates` 填 `2026-11-02 2026-11-03`；或 `gh workflow run update.yml -R Roy5168/govbond-monitor -f dates="起 迄"`。
 - 改了 `template.html`、`bonddata.py`、`update.py`、`build_site.py`、`parse_issues.py` 或 workflow 推上 main，會自動重新部署。推之前先 `git pull`（機器人每天會寫回資料）。
 - **本機排程改為只同步**：`~/scripts/bondmarket_update.sh` 不再自己抓櫃買，而是 `git pull --ff-only` 取回 GitHub 的資料後 `update.py --rebuild`，避免本機與 GitHub 兩份資料分岔。
