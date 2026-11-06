@@ -35,6 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main   # 排隊等候的 run 要拿最新的 main，不是觸發當下的版本，否則前一個 run 寫回資料後這裡 push 會被拒
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
